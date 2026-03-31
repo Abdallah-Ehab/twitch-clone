@@ -8,6 +8,8 @@ export interface IUser extends Document {
   username: string;
   email: string;
   password?: string;
+  isLive?: boolean;
+  viewerCount?: number;
   streamkey: string;
 }
 
@@ -17,6 +19,8 @@ const userSchema = new Schema<IUser>({
   username: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  isLive: { type: Boolean, default: false },
+  viewerCount: { type: Number, default: 0 },
   streamkey: { type: String, required: true }
 });
 
