@@ -1,5 +1,6 @@
 import userModel from "../models/user.model.js";
 import bcrypt from 'bcrypt';
+import Channel from '../models/channel.model.js';
 
 
 export const register = async (userData: { username: string; email: string; password: string }) => {
@@ -11,15 +12,22 @@ export const register = async (userData: { username: string; email: string; pass
         throw new Error('Email is already registered');
     }
 
+    const streamKey = generateStreamKey();
 
     const newUser = new userModel({
         id: new Date().getTime().toString(),
         username,
         email,
         password,
-        streamkey: generateStreamKey()
+        streamkey: streamKey
     });
-    await newUser.save();
+    const savedUser = await newUser.save();
+
+    const newChannel = new Channel({
+        owner: savedUser._id,
+        streamKey: streamKey
+    });
+    await newChannel.save();
 }
 
 function generateStreamKey() {
