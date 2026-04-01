@@ -17,11 +17,14 @@ export interface Channel {
     username: string;
     avatarUrl: string;
     thumbnailUrl: string;
-    bannerUrl?: string;
+    bannerUrl: string;
     bio: string;
     isLive: boolean;
     viewerCount: number;
+    streamUrl?: string;
+    hlsUrl?: string;
     streamKey?: string;
+    qualities?: string[];
     tags?: string[];
 }
 
@@ -48,6 +51,10 @@ export class ApiService {
 
     getChannelByUsername(username: string): Observable<Channel> {
         return this.http.get<Channel>(`${this.baseUrl}/channels/${username}`);
+    }
+
+    getMyChannel(): Observable<Channel> {
+        return this.http.get<Channel>(`${this.baseUrl}/channels/me`);
     }
 
     register(data: { username: string; email: string; password: string }): Observable<{ message: string }> {

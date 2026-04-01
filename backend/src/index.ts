@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import channelRouter from './routes/channel.router.js';
 import followRouter from './routes/follow.router.js';
 import authRouter from './routes/auth.router.js';
+import { streamManager } from './configs/node_media_server.js';
 
 dotenv.config()
 
@@ -27,7 +28,14 @@ app.use('/api/channels', channelRouter);
 app.use('/api/follows', followRouter);
 
 app.get("/api/health", (req: Request, res: Response) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        streaming: {
+            rtmp: 'rtmp://localhost:1935',
+            hls: 'http://localhost:8000'
+        }
+    });
 });
 
 app.get("/", (req: Request, res: Response) => {
@@ -38,6 +46,9 @@ const connectDB = async () => {
     try {
         await mongoose.connect(MONGODB_URI);
         console.log('MongoDB connected successfully');
+        
+        streamManager.start();
+        
     } catch (error) {
         console.error('MongoDB connection error:', error);
         process.exit(1);
@@ -46,5 +57,7 @@ const connectDB = async () => {
 
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
+    console.log(`RTMP Server: rtmp://localhost:1935`);
+    console.log(`HLS Server: http://localhost:8000`);
     connectDB();
 });

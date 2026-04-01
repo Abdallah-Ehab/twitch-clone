@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getAll, getByUsername, getById, update } from '../services/channel.service.js';
+import { getAll, getByUsername, getById, getByUserId, update } from '../services/channel.service.js';
 
 export const getChannels = async (req: Request, res: Response) => {
     try {
@@ -17,6 +17,24 @@ export const getChannelByUsername = async (req: Request, res: Response) => {
         res.status(200).json(channel);
     } catch (error: any) {
         res.status(404).json({ error: error.message });
+    }
+};
+
+export const getMyChannel = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        
+        const channel = await getByUserId(userId);
+        if (!channel) {
+            return res.status(404).json({ error: 'Channel not found' });
+        }
+        
+        res.status(200).json(channel);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
     }
 };
 

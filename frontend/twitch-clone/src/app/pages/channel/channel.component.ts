@@ -1,9 +1,10 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from '../../components/nav/header.component';
 import { ChatComponent } from '../../components/channel/chat.component';
 import { LiveBadgeComponent } from '../../components/shared/live-badge.component';
 import { ChannelCardComponent } from '../../components/shared/channel-card.component';
+import { VideoPlayerComponent } from '../../components/channel/video-player.component';
 import { ApiService, Channel } from '../../services/api.service';
 
 @Component({
@@ -14,11 +15,12 @@ import { ApiService, Channel } from '../../services/api.service';
     ChatComponent,
     LiveBadgeComponent,
     ChannelCardComponent,
+    VideoPlayerComponent,
   ],
   template: `
     <div class="min-h-screen bg-background">
       <app-header />
-      
+
       @if (loading()) {
         <div class="flex items-center justify-center h-[calc(100vh-3.5rem)]">
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -36,56 +38,35 @@ import { ApiService, Channel } from '../../services/api.service';
           <!-- Main Content -->
           <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Video Player -->
-            <div class="relative bg-black aspect-video lg:aspect-auto lg:flex-1">
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="text-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-muted-foreground mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  <p class="text-muted-foreground">{{ channel()!.isLive ? 'Live Stream' : 'Channel Offline' }}</p>
-                  <p class="text-xs text-muted-foreground/60 mt-1">RTMP stream will be embedded here</p>
-                </div>
-              </div>
-
-              <!-- Player Controls Overlay -->
-              <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 hover:opacity-100 transition-opacity">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <button class="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </button>
-                    <button class="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                      </svg>
-                    </button>
-                    <span class="text-white text-sm">{{ channel()!.bio || 'Stream Title' }}</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button class="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                      </svg>
-                    </button>
-                    <button class="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
-                    </button>
+            <div class="relative bg-black w-full" [class.aspect-video]="!isFullscreen" [class.h-full]="isFullscreen">
+              @if (channel()!.isLive && channel()!.hlsUrl) {
+                <app-video-player
+                  [src]="channel()!.hlsUrl || ''"
+                  [posterUrl]="channel()!.thumbnailUrl || channel()!.bannerUrl || ''"
+                  [isLive]="true"
+                  [qualities]="channel()!.qualities || ['auto', '1080p', '720p', '480p', '360p']"
+                />
+              } @else {
+                <!-- Offline State -->
+                <div class="w-full aspect-video bg-black flex items-center justify-center">
+                  <div class="text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-20 h-20 text-muted-foreground mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <p class="text-xl text-muted-foreground mb-2">Channel Offline</p>
+                    <p class="text-sm text-muted-foreground/60">{{ channel()!.username }} is not currently streaming</p>
                   </div>
                 </div>
-              </div>
+              }
             </div>
 
             <!-- Stream Info -->
             <div class="border-t border-border bg-card p-4">
               <div class="flex flex-col md:flex-row md:items-start gap-4">
                 <div class="flex items-center gap-3 flex-1">
-                  <img 
-                    [src]="channel()!.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&h=64&fit=crop'" 
-                    alt="Channel avatar" 
+                  <img
+                    [src]="channel()!.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&h=64&fit=crop'"
+                    alt="Channel avatar"
                     class="w-12 h-12 rounded-full object-cover bg-muted"
                   />
                   <div class="flex-1 min-w-0">
@@ -111,42 +92,107 @@ import { ApiService, Channel } from '../../services/api.service';
                     </svg>
                     {{ isFollowing() ? 'Following' : 'Follow' }}
                   </button>
-                  <button class="gap-2 px-4 py-2 bg-secondary hover:bg-muted rounded-md font-medium transition-colors">
+                  <button (click)="shareChannel()" class="gap-2 px-4 py-2 bg-secondary hover:bg-muted rounded-md font-medium transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                     </svg>
                     Share
                   </button>
                 </div>
               </div>
+
+              <!-- Tags -->
+              @if (channel()!.tags && channel()!.tags!.length > 0) {
+                <div class="flex gap-2 mt-4 flex-wrap">
+                  @for (tag of channel()!.tags; track tag) {
+                    <span class="px-2 py-1 rounded text-xs font-medium bg-muted text-muted-foreground">{{ tag }}</span>
+                  }
+                </div>
+              }
             </div>
 
             <!-- Tabs -->
             <div class="flex-1 overflow-y-auto">
               <div class="border-b border-border">
                 <div class="flex px-4 bg-card">
-                  <button class="px-4 py-3 text-sm font-medium border-b-2 border-primary text-primary">Home</button>
-                  <button class="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground">Videos</button>
-                  <button class="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground">Followers</button>
-                  <button class="px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground">About</button>
+                  <button
+                    class="px-4 py-3 text-sm font-medium border-b-2"
+                    [class.border-primary]="activeTab() === 'home'"
+                    [class.text-primary]="activeTab() === 'home'"
+                    [class.text-muted-foreground]="activeTab() !== 'home'"
+                    (click)="activeTab.set('home')"
+                  >Home</button>
+                  <button
+                    class="px-4 py-3 text-sm font-medium border-b-2 border-transparent"
+                    [class.border-primary]="activeTab() === 'videos'"
+                    [class.text-primary]="activeTab() === 'videos'"
+                    [class.text-muted-foreground]="activeTab() !== 'videos'"
+                    (click)="activeTab.set('videos')"
+                  >Videos</button>
+                  <button
+                    class="px-4 py-3 text-sm font-medium border-b-2 border-transparent"
+                    [class.border-primary]="activeTab() === 'followers'"
+                    [class.text-primary]="activeTab() === 'followers'"
+                    [class.text-muted-foreground]="activeTab() !== 'followers'"
+                    (click)="activeTab.set('followers')"
+                  >Followers</button>
+                  <button
+                    class="px-4 py-3 text-sm font-medium border-b-2 border-transparent"
+                    [class.border-primary]="activeTab() === 'about'"
+                    [class.text-primary]="activeTab() === 'about'"
+                    [class.text-muted-foreground]="activeTab() !== 'about'"
+                    (click)="activeTab.set('about')"
+                  >About</button>
                 </div>
               </div>
 
               <div class="p-4">
-                <h3 class="font-semibold text-lg mb-4">Recommended Channels</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  @for (rec of recommendedChannels(); track rec.id) {
-                    <app-channel-card 
-                      [username]="rec.username"
-                      [displayName]="rec.username"
-                      [thumbnailUrl]="rec.thumbnailUrl || 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=640&h=360&fit=crop'"
-                      [avatarUrl]="rec.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&h=64&fit=crop'"
-                      [category]="rec.bio || 'Variety'"
-                      [isLive]="rec.isLive"
-                      [viewerCount]="rec.viewerCount"
-                    />
+                @switch (activeTab()) {
+                  @case ('home') {
+                    <h3 class="font-semibold text-lg mb-4">Recommended Channels</h3>
+                    @if (recommendedChannels().length > 0) {
+                      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        @for (rec of recommendedChannels(); track rec.id) {
+                          <app-channel-card
+                            [username]="rec.username"
+                            [displayName]="rec.username"
+                            [thumbnailUrl]="rec.thumbnailUrl || 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=640&h=360&fit=crop'"
+                            [avatarUrl]="rec.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&h=64&fit=crop'"
+                            [category]="rec.bio || 'Variety'"
+                            [isLive]="rec.isLive"
+                            [viewerCount]="rec.viewerCount"
+                          />
+                        }
+                      </div>
+                    } @else {
+                      <p class="text-muted-foreground">No other channels are currently live.</p>
+                    }
                   }
-                </div>
+                  @case ('videos') {
+                    <h3 class="font-semibold text-lg mb-4">Past Broadcasts</h3>
+                    <p class="text-muted-foreground">No past broadcasts available.</p>
+                  }
+                  @case ('followers') {
+                    <h3 class="font-semibold text-lg mb-4">Followers</h3>
+                    <p class="text-muted-foreground">Follower count coming soon.</p>
+                  }
+                  @case ('about') {
+                    <h3 class="font-semibold text-lg mb-4">About {{ channel()!.username }}</h3>
+                    <p class="text-muted-foreground mb-4">{{ channel()!.bio || 'This channel has no description.' }}</p>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p class="text-muted-foreground">Stream URL</p>
+                        <p class="font-medium text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">{{ channel()!.streamUrl }}</p>
+                      </div>
+                      @if (channel()!.isLive) {
+                        <div>
+                          <p class="text-muted-foreground">Playback URL</p>
+                          <p class="font-medium text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">{{ channel()!.hlsUrl }}</p>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
               </div>
             </div>
           </div>
@@ -168,12 +214,14 @@ import { ApiService, Channel } from '../../services/api.service';
 export class ChannelComponent implements OnInit {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
-  
+
   channel = signal<Channel | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
   isFollowing = signal(false);
   recommendedChannels = signal<Channel[]>([]);
+  activeTab = signal<'home' | 'videos' | 'followers' | 'about'>('home');
+  isFullscreen = false;
 
   ngOnInit() {
     this.route.params.subscribe(params => {
@@ -231,6 +279,23 @@ export class ChannelComponent implements OnInit {
         error: () => console.error('Failed to follow')
       });
     }
+  }
+
+  shareChannel() {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: `${this.channel()?.username}'s Channel`,
+        url: url
+      });
+    } else {
+      navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
+  }
+
+  onFullscreenChange(isFullscreen: boolean) {
+    this.isFullscreen = isFullscreen;
   }
 
   formatViewerCount(count: number): string {
