@@ -55,8 +55,8 @@ import { BrnButton } from '@spartan-ng/brain/button';
 
           <!-- Auth Buttons (Logged Out State) -->
           <div class="hidden md:flex items-center gap-2">
-            <a href="/auth" brnButton variant="outline" class="text-sm font-medium">Log In</a>
-            <a href="/auth" brnButton class="text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 p-2 rounded hover:">Sign Up</a>
+            <a href="/login" brnButton variant="outline" class="text-sm font-medium">Log In</a>
+            <a href="/register" brnButton class="text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 p-2 rounded hover:">Sign Up</a>
           </div>
 
           <!-- User Menu (Logged In State - Shown for UI) -->

@@ -1,15 +1,17 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { HeaderComponent } from '../../components/nav/header.component';
+import { Component, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { HeaderComponent } from '../../../components/nav/header.component';
+import { AuthService, ILoginCredentials } from '../../../../services/auth-service';
 
 @Component({
-  selector: 'app-auth',
+  selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, HeaderComponent],
+  imports: [HeaderComponent, ReactiveFormsModule, RouterLink],
   template: `
     <div class="min-h-screen bg-background">
       <app-header />
-      
+
       <main class="flex items-center justify-center min-h-[calc(100vh-3.5rem)] p-4">
         <div class="w-full max-w-md">
           <!-- Login Card -->
@@ -22,14 +24,23 @@ import { HeaderComponent } from '../../components/nav/header.component';
               <p class="text-sm text-muted-foreground mt-1">Sign in to continue to StreamHub</p>
             </div>
 
-            <form class="space-y-4">
+            <form class="space-y-4" [formGroup]="loginForm" (ngSubmit)="submit()">
               <div>
                 <label class="block text-sm font-medium text-foreground mb-1.5">Email</label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   placeholder="you&#64;example.com"
                   class="w-full h-10 px-4 bg-secondary border border-input rounded-md text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  formControlName="email"
                 />
+                @if (loginForm.get('email')?.dirty || loginForm.get('email')?.touched) {
+                  @if (loginForm.get('email')?.errors?.['required']) {
+                    <p class="text-xs text-destructive mt-1">Email is required</p>
+                  }
+                  @if (loginForm.get('email')?.errors?.['email']) {
+                    <p class="text-xs text-destructive mt-1">Please enter a valid email address</p>
+                  }
+                }
               </div>
 
               <div>
@@ -38,10 +49,11 @@ import { HeaderComponent } from '../../components/nav/header.component';
                   <button type="button" class="text-xs text-primary hover:underline">Forgot password?</button>
                 </div>
                 <div class="relative">
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     placeholder="Enter your password"
                     class="w-full h-10 px-4 pr-10 bg-secondary border border-input rounded-md text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    formControlName="password"
                   />
                   <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,6 +62,11 @@ import { HeaderComponent } from '../../components/nav/header.component';
                     </svg>
                   </button>
                 </div>
+                @if (loginForm.get('password')?.dirty || loginForm.get('password')?.touched) {
+                  @if (loginForm.get('password')?.errors?.['required']) {
+                    <p class="text-xs text-destructive mt-1">Password is required</p>
+                  }
+                }
               </div>
 
               <div class="flex items-center gap-2">
@@ -57,10 +74,22 @@ import { HeaderComponent } from '../../components/nav/header.component';
                 <label for="remember" class="text-sm text-muted-foreground">Remember me</label>
               </div>
 
-              <button type="submit" class="w-full h-10 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
-                Log In
+              <button type="submit" [disabled]="loading || loginForm.invalid" class="w-full h-10 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                @if (loading) {
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-primary-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Logging In...
+                } @else {
+                  Log In
+                }
               </button>
             </form>
+
+            @if(this.error) {
+              <p class="text-destructive text-sm mt-4">{{ this.error }}</p>
+            }
 
             <div class="relative my-6">
               <div class="absolute inset-0 flex items-center">
@@ -90,63 +119,8 @@ import { HeaderComponent } from '../../components/nav/header.component';
             </div>
 
             <p class="text-center text-sm text-muted-foreground mt-6">
-              Don't have an account? 
-              <button class="text-primary hover:underline font-medium">Sign up</button>
-            </p>
-          </div>
-
-          <!-- Register Card -->
-          <div class="mt-6 bg-card border border-border rounded-lg p-6 shadow-lg">
-            <div class="text-center mb-6">
-              <h1 class="text-2xl font-bold text-foreground">Create Account</h1>
-              <p class="text-sm text-muted-foreground mt-1">Join StreamHub and start streaming</p>
-            </div>
-
-            <form class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-1.5">Username</label>
-                <input 
-                  type="text" 
-                  placeholder="Choose a username"
-                  class="w-full h-10 px-4 bg-secondary border border-input rounded-md text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <p class="text-xs text-muted-foreground mt-1">This will be your public display name</p>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-1.5">Email</label>
-                <input 
-                  type="email" 
-                  placeholder="you&#64;example.com"
-                  class="w-full h-10 px-4 bg-secondary border border-input rounded-md text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-1.5">Password</label>
-                <input 
-                  type="password" 
-                  placeholder="Create a strong password"
-                  class="w-full h-10 px-4 bg-secondary border border-input rounded-md text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-
-              <div class="flex items-start gap-2">
-                <input type="checkbox" id="terms" class="w-4 h-4 mt-0.5 rounded border-input bg-secondary text-primary focus:ring-primary" />
-                <label for="terms" class="text-xs text-muted-foreground">
-                  I agree to the <button class="text-primary hover:underline">Terms of Service</button> and 
-                  <button class="text-primary hover:underline">Privacy Policy</button>
-                </label>
-              </div>
-
-              <button type="submit" class="w-full h-10 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
-                Create Account
-              </button>
-            </form>
-
-            <p class="text-center text-sm text-muted-foreground mt-6">
-              Already have an account? 
-              <button class="text-primary hover:underline font-medium">Log in</button>
+              Don't have an account?
+              <a routerLink="/register" class="text-primary hover:underline font-medium cursor-pointer">Sign up</a>
             </p>
           </div>
         </div>
@@ -159,4 +133,33 @@ import { HeaderComponent } from '../../components/nav/header.component';
     }
   `
 })
-export class AuthComponent {}
+export class LoginComponent {
+  fb = inject(FormBuilder);
+  router = inject(Router);
+  authService = inject(AuthService);
+  error: string | null = null;
+  loading = false;
+
+  loginForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required]]
+  });
+
+  submit() {
+    if (this.loginForm.valid) {
+      this.error = null;
+      this.loading = true;
+      this.authService.login((this.loginForm.value) as ILoginCredentials).subscribe({
+        next: (res) => {
+          this.loading = false;
+          this.router.navigate(['/']);
+          console.log('Login successful:', res);
+        },
+        error: (err) => {
+          this.loading = false;
+          this.error = err.error?.message || 'An error occurred during login';
+        }
+      });
+    }
+  }
+}

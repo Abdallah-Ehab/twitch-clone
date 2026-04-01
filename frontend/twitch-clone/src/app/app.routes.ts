@@ -10,8 +10,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/channel/channel.component').then(m => m.ChannelComponent)
   },
   {
-    path: 'auth',
-    loadComponent: () => import('./pages/auth/auth.component').then(m => m.AuthComponent)
+    path: 'login',
+    loadComponent: () => import('./pages/auth/login/login.component').then(m => m.LoginComponent)
+  },
+  {
+    path: 'register',
+    loadComponent: () => import('./pages/auth/register/register.component').then(m => m.RegisterComponent)
   },
   {
     path: 'dashboard',
