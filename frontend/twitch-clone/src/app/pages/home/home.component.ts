@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { ChannelCardComponent } from '../../components/shared/channel-card.component';
 import { HeaderComponent } from '../../components/nav/header.component';
+import { ApiService, Channel } from '../../services/api.service';
 
 @Component({
   selector: 'app-home',
@@ -26,38 +27,56 @@ import { HeaderComponent } from '../../components/nav/header.component';
           </div>
         </section>
 
-        <!-- Live Channels Section -->
-        <section class="mb-8">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-              <h2 class="text-xl font-bold text-foreground">Live Channels</h2>
-              <span class="text-sm text-muted-foreground">({{ liveChannels.length }})</span>
-            </div>
-            <button class="text-sm text-primary hover:text-primary/80 font-medium">
-              Show More
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
+        @if (loading()) {
+          <div class="flex items-center justify-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        } @else if (error()) {
+          <div class="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-8">
+            <p class="text-destructive">{{ error() }}</p>
+            <button (click)="loadChannels()" class="mt-2 text-sm text-primary hover:underline">
+              Try again
             </button>
           </div>
+        } @else {
+          <!-- Live Channels Section -->
+          <section class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                <h2 class="text-xl font-bold text-foreground">Live Channels</h2>
+                <span class="text-sm text-muted-foreground">({{ channels().length }})</span>
+              </div>
+              <button class="text-sm text-primary hover:text-primary/80 font-medium">
+                Show More
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
 
-          <!-- Channel Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-            @for (channel of liveChannels; track channel.username) {
-              <app-channel-card
-                [username]="channel.username"
-                [displayName]="channel.displayName"
-                [thumbnailUrl]="channel.thumbnailUrl"
-                [avatarUrl]="channel.avatarUrl"
-                [category]="channel.category"
-                [isLive]="channel.isLive"
-                [viewerCount]="channel.viewerCount"
-                [tags]="channel.tags"
-              />
+            @if (channels().length === 0) {
+              <div class="text-center py-12 text-muted-foreground">
+                <p>No channels are currently live.</p>
+                <p class="text-sm mt-1">Check back later!</p>
+              </div>
+            } @else {
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                @for (channel of channels(); track channel.id) {
+                  <app-channel-card
+                    [username]="channel.username"
+                    [displayName]="channel.username"
+                    [thumbnailUrl]="channel.thumbnailUrl || 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=640&h=360&fit=crop'"
+                    [avatarUrl]="channel.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&h=64&fit=crop'"
+                    [category]="channel.bio || 'Variety'"
+                    [isLive]="channel.isLive"
+                    [viewerCount]="channel.viewerCount"
+                  />
+                }
+              </div>
             }
-          </div>
-        </section>
+          </section>
+        }
 
         <!-- Categories Section -->
         <section>
@@ -118,89 +137,10 @@ import { HeaderComponent } from '../../components/nav/header.component';
     }
   `
 })
-export class HomeComponent {
-  liveChannels = [
-    {
-      username: 'ninja',
-      displayName: 'Ninja',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=640&h=360&fit=crop',
-      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&h=64&fit=crop',
-      category: 'Fortnite',
-      isLive: true,
-      viewerCount: 45200,
-      tags: ['English', 'FPS', 'Competitive']
-    },
-    {
-      username: 'pokimane',
-      displayName: 'Pokimane',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=640&h=360&fit=crop',
-      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&fit=crop',
-      category: 'Just Chatting',
-      isLive: true,
-      viewerCount: 28500,
-      tags: ['English', 'Variety']
-    },
-    {
-      username: 'shroud',
-      displayName: 'Shroud',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=640&h=360&fit=crop',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop',
-      category: 'Valorant',
-      isLive: true,
-      viewerCount: 32100,
-      tags: ['English', 'FPS']
-    },
-    {
-      username: 'sykkuno',
-      displayName: 'Sykkuno',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=640&h=360&fit=crop',
-      avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=64&h=64&fit=crop',
-      category: 'GTA V',
-      isLive: true,
-      viewerCount: 18900,
-      tags: ['English', 'RP']
-    },
-    {
-      username: 'ludwig',
-      displayName: 'Ludwig',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=640&h=360&fit=crop',
-      avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop',
-      category: 'Variety',
-      isLive: true,
-      viewerCount: 22100,
-      tags: ['English', 'Variety']
-    },
-    {
-      username: 'xQc',
-      displayName: 'xQc',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?w=640&h=360&fit=crop',
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=64&h=64&fit=crop',
-      category: 'Just Chatting',
-      isLive: true,
-      viewerCount: 67800,
-      tags: ['English', 'Variety', 'Reactions']
-    },
-    {
-      username: 's1mple',
-      displayName: 's1mple',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1493711662062-fa541f7f3d24?w=640&h=360&fit=crop',
-      avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=64&h=64&fit=crop',
-      category: 'CS2',
-      isLive: true,
-      viewerCount: 89400,
-      tags: ['English', 'FPS', 'Competitive']
-    },
-    {
-      username: 'fuslie',
-      displayName: 'Fuslie',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=640&h=360&fit=crop',
-      avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop',
-      category: 'Variety',
-      isLive: true,
-      viewerCount: 15600,
-      tags: ['English', 'Variety']
-    }
-  ];
+export class HomeComponent implements OnInit {
+  channels = signal<Channel[]>([]);
+  loading = signal(true);
+  error = signal<string | null>(null);
 
   categories = [
     { name: 'Fortnite', thumbnailUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=320&h=180&fit=crop', iconUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=64&h=64&fit=crop', viewerCount: '125K', streams: 892 },
@@ -212,4 +152,27 @@ export class HomeComponent {
     { name: 'CS2', thumbnailUrl: 'https://images.unsplash.com/photo-1493711662062-fa541f7f3d24?w=320&h=180&fit=crop', iconUrl: 'https://images.unsplash.com/photo-1493711662062-fa541f7f3d24?w=64&h=64&fit=crop', viewerCount: '112K', streams: 723 },
     { name: 'Apex Legends', thumbnailUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=320&h=180&fit=crop', iconUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=64&h=64&fit=crop', viewerCount: '45K', streams: 321 }
   ];
+
+  constructor(private api: ApiService) {}
+
+  ngOnInit() {
+    this.loadChannels();
+  }
+
+  loadChannels() {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.api.getChannels().subscribe({
+      next: (channels) => {
+        this.channels.set(channels);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load channels:', err);
+        this.error.set('Failed to load channels. Please make sure the backend is running.');
+        this.loading.set(false);
+      }
+    });
+  }
 }

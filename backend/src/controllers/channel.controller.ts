@@ -26,9 +26,11 @@ export const updateChannel = async (req: Request, res: Response) => {
 
         const userIdStr = (req as any).user.id;
         const channel = await getById(id as string);
-        if (channel.owner.id !== userIdStr) {
+        
+        if (!channel.owner || (channel.owner as any)._id.toString() !== userIdStr) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
+        
         const updated = await update(id as string, req.body);
         res.status(200).json(updated);
     } catch (error: any) {
