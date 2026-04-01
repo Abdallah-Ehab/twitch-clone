@@ -38,4 +38,7 @@ export class AuthService {
     refreshToken() {
         return this.httpClient.post('/api/auth/refresh', {});
     }
+    isLoggedIn(){
+      return this.httpClient.get('/api/auth/is-logged-in');
+    }
 }
