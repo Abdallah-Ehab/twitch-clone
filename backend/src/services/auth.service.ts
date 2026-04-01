@@ -2,12 +2,6 @@ import userModel from "../models/user.model.js";
 import bcrypt from 'bcrypt';
 import Channel from '../models/channel.model.js';
 
-
-
-
-
-
-
 export const register = async (userData: { username: string; email: string; password: string }) => {
     const { username, email, password } = userData;
 
