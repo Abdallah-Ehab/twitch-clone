@@ -24,6 +24,7 @@
     "mongoose": "^9.3.3"
   },
   "devDependencies": {
+    "@spartan-ng/cli": "^0.0.1-alpha.657",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
