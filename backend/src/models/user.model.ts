@@ -1,28 +1,28 @@
 import { Schema, model, Document} from 'mongoose';
 import bcrypt from 'bcrypt';
-import { NextFunction,Request,Response } from 'express';
 
 
 export interface IUser extends Document {
-  id: string;
   username: string;
   email: string;
-  password?: string;
+  password: string;
   isLive?: boolean;
   viewerCount?: number;
   streamkey: string;
+  avatarUrl?: string;
+  createdAt?: Date;
 }
 
 
 const userSchema = new Schema<IUser>({
-  id: { type: String, required: true },
-  username: { type: String, required: true },
+  username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   isLive: { type: Boolean, default: false },
   viewerCount: { type: Number, default: 0 },
-  streamkey: { type: String, required: true }
-});
+  streamkey: { type: String, required: true, unique: true },
+  avatarUrl: { type: String, default: '' },
+}, { timestamps: true });
 
 userSchema.pre<IUser>('save', async function() {
 
@@ -30,7 +30,7 @@ userSchema.pre<IUser>('save', async function() {
 
   try {
     const salt = await bcrypt.genSalt(10);
-    (this as IUser).password = await bcrypt.hash(this.password as string, salt);
+    this.password = await bcrypt.hash(this.password, salt);
 
   } catch (error: any) {
     throw error;
@@ -38,7 +38,6 @@ userSchema.pre<IUser>('save', async function() {
 });
 
 const User = model<IUser>('User', userSchema);
-
 
 
 export default User;
