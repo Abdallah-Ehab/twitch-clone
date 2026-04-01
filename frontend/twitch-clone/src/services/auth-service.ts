@@ -35,4 +35,7 @@ export class AuthService {
     checkUsernameExists(username: string){
         return this.httpClient.get<IResUsernameCheck>(`/api/auth/check-username/${username}`);
     }
+    refreshToken() {
+        return this.httpClient.post('/api/auth/refresh', {});
+    }
 }
