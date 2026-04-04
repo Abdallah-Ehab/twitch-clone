@@ -3,15 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-export interface User {
-    id: string;
-    username: string;
-    email?: string;
-    avatarUrl?: string;
-    isLive?: boolean;
-    viewerCount?: number;
-}
-
 export interface Channel {
     id: string;
     username: string;
@@ -26,16 +17,6 @@ export interface Channel {
     streamKey?: string;
     qualities?: string[];
     tags?: string[];
-}
-
-export interface AuthResponse {
-    message: string;
-    user: User;
-    accessToken: string;
-}
-
-export interface ApiError {
-    error: string;
 }
 
 @Injectable({
@@ -57,16 +38,8 @@ export class ApiService {
         return this.http.get<Channel>(`${this.baseUrl}/channels/me`);
     }
 
-    register(data: { username: string; email: string; password: string }): Observable<{ message: string }> {
-        return this.http.post<{ message: string }>(`${this.baseUrl}/auth/register`, data);
-    }
-
-    login(email: string, password: string): Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, { email, password });
-    }
-
-    logout(): Observable<{ message: string }> {
-        return this.http.post<{ message: string }>(`${this.baseUrl}/auth/logout`, {});
+    updateChannel(channelId: string, data: { bio?: string; avatarUrl?: string; bannerUrl?: string }): Observable<Channel> {
+        return this.http.put<Channel>(`${this.baseUrl}/channels/${channelId}`, data);
     }
 
     followChannel(channelId: string): Observable<{ message: string }> {
@@ -75,9 +48,5 @@ export class ApiService {
 
     unfollowChannel(channelId: string): Observable<{ message: string }> {
         return this.http.delete<{ message: string }>(`${this.baseUrl}/follows/${channelId}`);
-    }
-
-    updateChannel(channelId: string, data: { bio?: string; avatarUrl?: string; bannerUrl?: string }): Observable<Channel> {
-        return this.http.put<Channel>(`${this.baseUrl}/channels/${channelId}`, data);
     }
 }
