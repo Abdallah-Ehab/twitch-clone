@@ -303,9 +303,9 @@ export class DashboardComponent implements OnInit {
         this.saving.set(false);
         this.myChannel.set({
           ...channel,
-          bio: this.bio,
-          avatarUrl: this.avatarUrl,
-          bannerUrl: this.bannerUrl
+          bio: updatedChannel.bio,
+          avatarUrl: updatedChannel.avatarUrl,
+          bannerUrl: updatedChannel.bannerUrl
         });
       },
       error: (err) => {

@@ -22,7 +22,7 @@ export class AuthInterceptor implements HttpInterceptor {
     });
     return next.handle(req).pipe(
       catchError((err) => {
-        if (err.status === 401 && !request.url.includes('/auth/refresh') && !request.url.includes('/auth/login') && !request.url.includes('/auth/register')) {
+        if ((err.status === 401 || err.status === 403) && !request.url.includes('/auth/refresh') && !request.url.includes('/auth/login') && !request.url.includes('/auth/register')) {
           return this.handleRefreshToken(request, next);
         }
         return throwError(() => err);
