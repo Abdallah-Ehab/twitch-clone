@@ -1,13 +1,16 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChannelService, Channel } from '../../services/channel.service';
 import { UserService } from '../../services/user.service';
+import { StreamService } from '../../services/stream.service';
+import { VideoPlayerComponent } from '../../components/channel/video-player.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
     FormsModule,
+    VideoPlayerComponent,
   ],
   template: `
     @if (loading()) {
@@ -75,20 +78,32 @@ import { UserService } from '../../services/user.service';
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
-          <div class="bg-card border border-border rounded-lg p-4">
+          <!-- stream preview -->
+           <!-- we need a video html element with #streamPreview to ref in angular  -->
+            <!-- then we need to get the stream key  -->
+           <div class="bg-card border border-border rounded-lg p-4">
             <h3 class="font-semibold mb-4">Stream Preview</h3>
-            <div class="aspect-video bg-black rounded-lg flex items-center justify-center">
-              <div class="text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-muted-foreground mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                @if (myChannel()?.isLive) {
-                  <p class="text-red-500 font-medium">You're currently streaming!</p>
-                  <a [href]="'/channel/' + currentUser()?.username" class="text-primary hover:underline text-sm mt-2 block">View your channel</a>
-                } @else {
-                  <p class="text-muted-foreground text-sm">Start streaming to see preview</p>
-                }
-              </div>
+            <div class="aspect-video bg-black rounded-lg overflow-hidden">
+              @if (myChannel()?.isLive && hlsUrl()) {
+                <app-video-player
+                  [src]="hlsUrl()!"
+                  [posterUrl]="myChannel()?.thumbnailUrl || ''"
+                  [isLive]="true"
+                />
+              } @else {
+                <div class="w-full h-full flex items-center justify-center">
+                  <div class="text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-muted-foreground mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    @if (myChannel()?.isLive) {
+                      <p class="text-red-500 font-medium">Stream starting...</p>
+                    } @else {
+                      <p class="text-muted-foreground text-sm">Start streaming to see preview</p>
+                    }
+                  </div>
+                </div>
+              }
             </div>
           </div>
 
@@ -235,9 +250,10 @@ import { UserService } from '../../services/user.service';
     }
   `
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   private channelService = inject(ChannelService);
   userService = inject(UserService);
+  private streamService = inject(StreamService);
 
   myChannel = signal<Channel | null>(null);
   loading = signal(true);
@@ -251,8 +267,21 @@ export class DashboardComponent implements OnInit {
   avatarUrl = '';
   bannerUrl = '';
 
+  hlsUrl = computed(() => {
+    const channel = this.myChannel();
+    if (channel?.streamKey) {
+      return `http://localhost:8000/live/${channel.streamKey}/stream.m3u8`;
+    }
+    return null;
+  });
+
   ngOnInit() {
     this.loadMyChannel();
+    this.streamService.connect();
+  }
+
+  ngOnDestroy() {
+    this.streamService.disconnect();
   }
 
   loadMyChannel() {

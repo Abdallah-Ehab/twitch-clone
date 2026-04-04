@@ -9,6 +9,7 @@ import channelRouter from './routes/channel.router.js';
 import followRouter from './routes/follow.router.js';
 import authRouter from './routes/auth.router.js';
 import { streamManager } from './configs/node_media_server.js';
+import { sseManager } from './services/sse-manager.js';
 
 dotenv.config()
 
@@ -26,6 +27,26 @@ app.use(cookieParser());
 app.use('/api/auth', authRouter);
 app.use('/api/channels', channelRouter);
 app.use('/api/follows', followRouter);
+
+app.get('/api/streams/events', (req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:4200');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    
+    res.flushHeaders();
+
+    const clientId = sseManager.addClient(res);
+    const heartbeat = setInterval(() => {
+        res.write(': heartbeat\n\n');
+    }, 30000);
+
+    req.on('close', () => {
+        clearInterval(heartbeat);
+        sseManager.removeClient(clientId);
+    });
+});
 
 app.get("/api/health", (req: Request, res: Response) => {
     res.json({ 
