@@ -76,4 +76,8 @@ export class ApiService {
     unfollowChannel(channelId: string): Observable<{ message: string }> {
         return this.http.delete<{ message: string }>(`${this.baseUrl}/follows/${channelId}`);
     }
+
+    updateChannel(channelId: string, data: { bio?: string; avatarUrl?: string; bannerUrl?: string }): Observable<Channel> {
+        return this.http.put<Channel>(`${this.baseUrl}/channels/${channelId}`, data);
+    }
 }

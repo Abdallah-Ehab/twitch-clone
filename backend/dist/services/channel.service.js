@@ -1,19 +1,24 @@
 import Channel from '../models/channel.model.js';
 import User from '../models/user.model.js';
+const RTMP_URL = process.env.RTMP_URL || 'rtmp://localhost:1935';
+const HLS_URL = process.env.HLS_URL || 'http://localhost:8000';
 export const getAll = async () => {
     const channels = await Channel.find({ isLive: true })
         .populate('owner', 'username avatarUrl')
         .sort({ viewerCount: -1 })
         .exec();
     return channels.map(channel => ({
-        id: channel._id,
+        id: channel._id.toString(),
         username: channel.owner.username,
         avatarUrl: channel.owner.avatarUrl || '',
         thumbnailUrl: channel.bannerUrl || '',
+        bannerUrl: channel.bannerUrl || '',
         bio: channel.bio || '',
         isLive: channel.isLive,
         viewerCount: channel.viewerCount,
-        streamKey: channel.streamKey
+        streamUrl: `${RTMP_URL}/live/${channel.streamKey}`,
+        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/stream.m3u8`,
+        qualities: ['auto', '1080p', '720p', '480p', '360p']
     }));
 };
 export const getAllWithUserInfo = async () => {
@@ -22,14 +27,17 @@ export const getAllWithUserInfo = async () => {
         .sort({ viewerCount: -1 })
         .exec();
     return channels.map(channel => ({
-        id: channel._id,
+        id: channel._id.toString(),
         username: channel.owner.username,
         avatarUrl: channel.owner.avatarUrl || '',
         thumbnailUrl: channel.bannerUrl || '',
+        bannerUrl: channel.bannerUrl || '',
         bio: channel.bio || '',
         isLive: channel.isLive,
         viewerCount: channel.viewerCount,
-        streamKey: channel.streamKey
+        streamUrl: `${RTMP_URL}/live/${channel.streamKey}`,
+        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/stream.m3u8`,
+        qualities: ['auto', '1080p', '720p', '480p', '360p']
     }));
 };
 export const getByUsername = async (username) => {
@@ -44,14 +52,17 @@ export const getByUsername = async (username) => {
         throw new Error('Channel not found');
     }
     return {
-        id: channel._id,
+        id: channel._id.toString(),
         username: channel.owner.username,
         avatarUrl: channel.owner.avatarUrl || '',
+        thumbnailUrl: channel.bannerUrl || '',
         bannerUrl: channel.bannerUrl || '',
         bio: channel.bio || '',
         isLive: channel.isLive,
         viewerCount: channel.viewerCount,
-        streamKey: channel.streamKey
+        streamUrl: `${RTMP_URL}/live/${channel.streamKey}`,
+        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/stream.m3u8`,
+        qualities: ['auto', '1080p', '720p', '480p', '360p']
     };
 };
 export const getById = async (id) => {
@@ -62,6 +73,27 @@ export const getById = async (id) => {
         throw new Error('Channel not found');
     }
     return channel;
+};
+export const getByUserId = async (userId) => {
+    const channel = await Channel.findOne({ owner: userId })
+        .populate('owner', 'username avatarUrl')
+        .exec();
+    if (!channel) {
+        return null;
+    }
+    return {
+        id: channel._id.toString(),
+        username: channel.owner.username,
+        avatarUrl: channel.owner.avatarUrl || '',
+        thumbnailUrl: channel.bannerUrl || '',
+        bannerUrl: channel.bannerUrl || '',
+        bio: channel.bio || '',
+        isLive: channel.isLive,
+        viewerCount: channel.viewerCount,
+        streamUrl: `${RTMP_URL}/live/${channel.streamKey}`,
+        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/stream.m3u8`,
+        qualities: ['auto', '1080p', '720p', '480p', '360p']
+    };
 };
 export const update = async (id, updateData) => {
     const channel = await Channel.findByIdAndUpdate(id, updateData, { new: true })

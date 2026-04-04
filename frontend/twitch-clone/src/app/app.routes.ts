@@ -1,29 +1,41 @@
 import { Routes } from '@angular/router';
-import { guestGuard } from '../core/guest.guard';
-import { routeGuard } from '../core/route.guard';
+import { guestGuard, routeGuard } from '../core/route.guard';
+
 export const routes: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pages/home/home.component').then(m => m.HomeComponent),
+      import('./layouts/main-layout.component').then(m => m.MainLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./pages/home/home.component').then(m => m.HomeComponent),
+      },
+      {
+        path: 'channel/:username',
+        loadComponent: () =>
+          import('./pages/channel/channel.component').then(m => m.ChannelComponent),
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
+        canActivate: [routeGuard],
+      },
+    ]
   },
   {
     path: 'login',
     loadComponent: () =>
       import('./pages/auth/login/login.component').then(m => m.LoginComponent),
-    canActivate: [guestGuard], // only guests
+    canActivate: [guestGuard],
   },
   {
     path: 'register',
     loadComponent: () =>
       import('./pages/auth/register/register.component').then(m => m.RegisterComponent),
-    canActivate: [guestGuard], // only guests
-  },
-  {
-    path: 'dashboard',
-    loadComponent: () =>
-      import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    canActivate: [routeGuard], // only logged-in users
+    canActivate: [guestGuard],
   },
   {
     path: '**',
