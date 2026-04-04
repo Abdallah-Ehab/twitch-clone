@@ -129,6 +129,16 @@ export class StreamService implements OnDestroy {
         return this._channels().get(streamKey);
     }
 
+    getStreamStateForChannel(channelId: string): ChannelStreamState | undefined {
+        const channels = this._channels();
+        for (const [, state] of channels) {
+            if (state.channelId === channelId) {
+                return state;
+            }
+        }
+        return undefined;
+    }
+
     ngOnDestroy(): void {
         this.disconnect();
     }
