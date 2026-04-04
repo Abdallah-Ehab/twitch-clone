@@ -22,7 +22,7 @@ export interface Channel {
 @Injectable({
     providedIn: 'root'
 })
-export class ApiService {
+export class ChannelService {
     private http = inject(HttpClient);
     private baseUrl = environment.apiUrl;
 

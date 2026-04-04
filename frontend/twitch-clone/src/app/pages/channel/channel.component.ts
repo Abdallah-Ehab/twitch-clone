@@ -4,7 +4,7 @@ import { ChatComponent } from '../../components/channel/chat.component';
 import { LiveBadgeComponent } from '../../components/shared/live-badge.component';
 import { ChannelCardComponent } from '../../components/shared/channel-card.component';
 import { VideoPlayerComponent } from '../../components/channel/video-player.component';
-import { ApiService, Channel } from '../../services/api.service';
+import { ChannelService, Channel } from '../../services/channel.service';
 
 @Component({
   selector: 'app-channel',
@@ -199,7 +199,7 @@ import { ApiService, Channel } from '../../services/api.service';
   `
 })
 export class ChannelComponent implements OnInit {
-  private api = inject(ApiService);
+  private channelService = inject(ChannelService);
   private route = inject(ActivatedRoute);
 
   channel = signal<Channel | null>(null);
@@ -223,7 +223,7 @@ export class ChannelComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.api.getChannelByUsername(username).subscribe({
+    this.channelService.getChannelByUsername(username).subscribe({
       next: (channel) => {
         this.channel.set(channel);
         this.loading.set(false);
@@ -238,7 +238,7 @@ export class ChannelComponent implements OnInit {
   }
 
   loadRecommendedChannels() {
-    this.api.getChannels().subscribe({
+    this.channelService.getChannels().subscribe({
       next: (channels) => {
         const currentUsername = this.channel()?.username;
         this.recommendedChannels.set(
@@ -256,12 +256,12 @@ export class ChannelComponent implements OnInit {
     if (!channelData) return;
 
     if (this.isFollowing()) {
-      this.api.unfollowChannel(channelData.id).subscribe({
+      this.channelService.unfollowChannel(channelData.id).subscribe({
         next: () => this.isFollowing.set(false),
         error: () => console.error('Failed to unfollow')
       });
     } else {
-      this.api.followChannel(channelData.id).subscribe({
+      this.channelService.followChannel(channelData.id).subscribe({
         next: () => this.isFollowing.set(true),
         error: () => console.error('Failed to follow')
       });

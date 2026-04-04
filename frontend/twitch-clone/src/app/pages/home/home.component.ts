@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { ChannelCardComponent } from '../../components/shared/channel-card.component';
-import { ApiService, Channel } from '../../services/api.service';
+import { ChannelService, Channel } from '../../services/channel.service';
 
 @Component({
   selector: 'app-home',
@@ -140,7 +140,7 @@ export class HomeComponent implements OnInit {
     { name: 'Apex Legends', thumbnailUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=320&h=180&fit=crop', iconUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=64&h=64&fit=crop', viewerCount: '45K', streams: 321 }
   ];
 
-  constructor(private api: ApiService) {}
+  constructor(private channelService: ChannelService) {}
 
   ngOnInit() {
     this.loadChannels();
@@ -150,7 +150,7 @@ export class HomeComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.api.getChannels().subscribe({
+    this.channelService.getChannels().subscribe({
       next: (channels) => {
         this.channels.set(channels);
         this.loading.set(false);

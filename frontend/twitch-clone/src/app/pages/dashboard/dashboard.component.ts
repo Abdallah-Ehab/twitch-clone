@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Channel } from '../../services/api.service';
+import { ChannelService, Channel } from '../../services/channel.service';
 import { UserService } from '../../services/user.service';
 
 @Component({
@@ -236,7 +236,7 @@ import { UserService } from '../../services/user.service';
   `
 })
 export class DashboardComponent implements OnInit {
-  private api = inject(ApiService);
+  private channelService = inject(ChannelService);
   userService = inject(UserService);
 
   myChannel = signal<Channel | null>(null);
@@ -259,7 +259,7 @@ export class DashboardComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.api.getMyChannel().subscribe({
+    this.channelService.getMyChannel().subscribe({
       next: (channel) => {
         this.myChannel.set(channel);
         this.bio = channel.bio || '';
@@ -294,7 +294,7 @@ export class DashboardComponent implements OnInit {
     this.saving.set(true);
     this.error.set(null);
 
-    this.api.updateChannel(channel.id, {
+    this.channelService.updateChannel(channel.id, {
       bio: this.bio,
       avatarUrl: this.avatarUrl,
       bannerUrl: this.bannerUrl
