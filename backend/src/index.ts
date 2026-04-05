@@ -27,9 +27,10 @@ app.use('/api/auth', authRouter);
 app.use('/api/channels', channelRouter);
 app.use('/api/follows', followRouter);
 
+
 app.get("/api/health", (req: Request, res: Response) => {
-    res.json({ 
-        status: 'ok', 
+    res.json({
+        status: 'ok',
         timestamp: new Date().toISOString(),
         streaming: {
             rtmp: 'rtmp://localhost:1935',
@@ -46,9 +47,9 @@ const connectDB = async () => {
     try {
         await mongoose.connect(MONGODB_URI);
         console.log('MongoDB connected successfully');
-        
+
         streamManager.start();
-        
+
     } catch (error) {
         console.error('MongoDB connection error:', error);
         process.exit(1);

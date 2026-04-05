@@ -1,4 +1,4 @@
-import { register, login } from '../services/auth.service.js';
+import { register, login, getUserById } from '../services/auth.service.js';
 import { generateToken } from '../utils/tokenGenerator.js';
 import RefreshTokenModel from '../models/refreshToken.model.js';
 export const registerController = async (req, res) => {
@@ -21,7 +21,7 @@ export const loginController = async (req, res) => {
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
         res.status(200).json({
@@ -56,7 +56,7 @@ export const refreshTokenController = async (req, res) => {
         res.cookie('refreshToken', newRefreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
         res.status(200).json({ accessToken: newAccessToken });
@@ -72,5 +72,44 @@ export const logout = async (req, res) => {
     }
     res.clearCookie('refreshToken');
     res.status(200).json({ message: 'Logged out successfully' });
+};
+export const isLoggedInController = async (req, res) => {
+    const userId = req.user?.id ?? null;
+    console.log(userId);
+    if (userId) {
+        return res.status(200).json({ loggedIn: true });
+    }
+    return res.status(200).json({ loggedIn: false });
+};
+export const meController = async (req, res) => {
+    const userId = req.user?.id ?? null;
+    if (!userId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    try {
+        const user = await getUserById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.status(200).json({
+            id: user._id.toString(),
+            username: user.username,
+            email: user.email
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+export const checkUsernameController = async (req, res) => {
+    try {
+        const { username } = req.params;
+        const User = await import('../models/user.model.js');
+        const count = await User.default.countDocuments({ username });
+        res.status(200).json({ exists: count > 0 });
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
 };
 //# sourceMappingURL=auth.controller.js.map

@@ -1,4 +1,4 @@
-import { getAll, getByUsername, getById, update } from '../services/channel.service.js';
+import { getAll, getByUsername, getById, getByUserId, update } from '../services/channel.service.js';
 export const getChannels = async (req, res) => {
     try {
         const channels = await getAll();
@@ -16,6 +16,22 @@ export const getChannelByUsername = async (req, res) => {
     }
     catch (error) {
         res.status(404).json({ error: error.message });
+    }
+};
+export const getMyChannel = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        const channel = await getByUserId(userId);
+        if (!channel) {
+            return res.status(404).json({ error: 'Channel not found' });
+        }
+        res.status(200).json(channel);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
 export const updateChannel = async (req, res) => {

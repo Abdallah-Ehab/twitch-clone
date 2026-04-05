@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, ElementRef, ViewChild, signal, computed, HostListener } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ElementRef, ViewChild, signal, computed, HostListener, AfterViewInit } from '@angular/core';
 import Hls from 'hls.js';
 
 export interface QualityLevel {
@@ -262,7 +262,7 @@ export interface QualityLevel {
     }
   `
 })
-export class VideoPlayerComponent implements OnInit, OnDestroy {
+export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
   @ViewChild('videoElement') videoElement!: ElementRef<HTMLVideoElement>;
   @ViewChild('playerContainer') playerContainer!: ElementRef<HTMLDivElement>;
 
@@ -274,6 +274,9 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
   private hls: Hls | null = null;
   private hideControlsTimeout: any;
   private clickTimeout: any;
+  private retryTimeout: any;
+  private retryCount = 0;
+  private maxRetries = 10;
 
   isPlaying = signal(false);
   isBuffering = signal(false);
@@ -290,7 +293,7 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
   hoverTime = signal<number | null>(null);
   hoverPosition = signal(0);
 
-  ngOnInit() {
+  ngAfterViewInit() {
     if (this.src) {
       this.initPlayer();
     }
@@ -354,6 +357,9 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
       this.hls.attachMedia(video);
 
       this.hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+        this.retryCount = 0;
+        clearTimeout(this.retryTimeout);
+
         const levels = data.levels.map((level, index) => ({
           height: level.height,
           bitrate: level.bitrate,
@@ -374,7 +380,15 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
           console.error('HLS fatal error:', data);
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              this.hls?.startLoad();
+              // manifest not ready yet (404) — retry after delay
+              if (data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR && this.retryCount < this.maxRetries) {
+                this.retryCount++;
+                console.log(`[HLS] Manifest not ready, retry ${this.retryCount}/${this.maxRetries} in 3s...`);
+                this.destroyPlayer();
+                this.retryTimeout = setTimeout(() => this.initPlayer(), 3000);
+              } else {
+                this.hls?.startLoad();
+              }
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
               this.hls?.recoverMediaError();
@@ -391,6 +405,7 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
   }
 
   private destroyPlayer() {
+    clearTimeout(this.retryTimeout);
     if (this.hls) {
       this.hls.destroy();
       this.hls = null;
