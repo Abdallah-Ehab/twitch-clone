@@ -23,7 +23,7 @@ export const getAll = async (): Promise<ChannelResponse[]> => {
         .populate<{ owner: IUser }>('owner', 'username avatarUrl')
         .sort({ viewerCount: -1 })
         .exec();
-    
+
     return channels.map(channel => ({
         id: channel._id.toString(),
         username: channel.owner.username,
@@ -34,7 +34,7 @@ export const getAll = async (): Promise<ChannelResponse[]> => {
         isLive: channel.isLive,
         viewerCount: channel.viewerCount,
         streamUrl: `${RTMP_URL}/live/${channel.streamKey}`,
-        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/stream.m3u8`,
+        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/index.m3u8`,
         qualities: ['auto', '1080p', '720p', '480p', '360p']
     }));
 };
@@ -44,7 +44,7 @@ export const getAllWithUserInfo = async (): Promise<ChannelResponse[]> => {
         .populate<{ owner: IUser }>('owner', 'username avatarUrl')
         .sort({ viewerCount: -1 })
         .exec();
-    
+
     return channels.map(channel => ({
         id: channel._id.toString(),
         username: channel.owner.username,
@@ -55,7 +55,7 @@ export const getAllWithUserInfo = async (): Promise<ChannelResponse[]> => {
         isLive: channel.isLive,
         viewerCount: channel.viewerCount,
         streamUrl: `${RTMP_URL}/live/${channel.streamKey}`,
-        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/stream.m3u8`,
+        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/index.m3u8`,
         qualities: ['auto', '1080p', '720p', '480p', '360p']
     }));
 };
@@ -68,11 +68,11 @@ export const getByUsername = async (username: string): Promise<ChannelResponse> 
     const channel = await Channel.findOne({ owner: user._id })
         .populate<{ owner: IUser }>('owner', 'username avatarUrl')
         .exec();
-    
+
     if (!channel) {
         throw new Error('Channel not found');
     }
-    
+
     return {
         id: channel._id.toString(),
         username: channel.owner.username,
@@ -83,7 +83,7 @@ export const getByUsername = async (username: string): Promise<ChannelResponse> 
         isLive: channel.isLive,
         viewerCount: channel.viewerCount,
         streamUrl: `${RTMP_URL}/live/${channel.streamKey}`,
-        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/stream.m3u8`,
+        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/index.m3u8`,
         qualities: ['auto', '1080p', '720p', '480p', '360p']
     };
 };
@@ -102,11 +102,11 @@ export const getByUserId = async (userId: string): Promise<ChannelResponse | nul
     const channel = await Channel.findOne({ owner: userId })
         .populate<{ owner: IUser }>('owner', 'username avatarUrl')
         .exec();
-    
+
     if (!channel) {
         return null;
     }
-    
+
     return {
         id: channel._id.toString(),
         username: channel.owner.username,
@@ -117,7 +117,7 @@ export const getByUserId = async (userId: string): Promise<ChannelResponse | nul
         isLive: channel.isLive,
         viewerCount: channel.viewerCount,
         streamUrl: `${RTMP_URL}/live/${channel.streamKey}`,
-        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/stream.m3u8`,
+        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/index.m3u8`,
         qualities: ['auto', '1080p', '720p', '480p', '360p']
     };
 };

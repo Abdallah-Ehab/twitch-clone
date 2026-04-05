@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular
 import { FormsModule } from '@angular/forms';
 import { ChannelService, Channel } from '../../services/channel.service';
 import { UserService } from '../../services/user.service';
-import { StreamService } from '../../services/stream.service';
 import { VideoPlayerComponent } from '../../components/channel/video-player.component';
+import { interval, startWith, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -47,8 +47,8 @@ import { VideoPlayerComponent } from '../../components/channel/video-player.comp
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           </div>
-          <p class="text-2xl font-bold text-foreground">{{ streamState()?.viewerCount || 0 }}</p>
-          @if (streamState()?.isLive) {
+          <p class="text-2xl font-bold text-foreground">{{ myChannel()?.viewerCount || 0 }}</p>
+          @if (myChannel()?.isLive) {
             <p class="text-xs text-red-500 mt-1">Currently live!</p>
           } @else {
             <p class="text-xs text-muted-foreground mt-1">Go live to get viewers</p>
@@ -69,10 +69,10 @@ import { VideoPlayerComponent } from '../../components/channel/video-player.comp
         <div class="bg-card border border-border rounded-lg p-4">
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm text-muted-foreground">Stream Status</span>
-            <div class="w-3 h-3 rounded-full" [class.bg-red-500]="streamState()?.isLive" [class.bg-gray-400]="!streamState()?.isLive"></div>
+            <div class="w-3 h-3 rounded-full" [class.bg-red-500]="myChannel()?.isLive" [class.bg-gray-400]="!myChannel  ()?.isLive"></div>
           </div>
-          <p class="text-2xl font-bold text-foreground">{{ streamState()?.isLive ? 'LIVE' : 'OFFLINE' }}</p>
-          <p class="text-xs text-muted-foreground mt-1">{{ streamState()?.isLive ? 'Streaming now' : 'Not broadcasting' }}</p>
+          <p class="text-2xl font-bold text-foreground">{{ myChannel()?.isLive ? 'LIVE' : 'OFFLINE' }}</p>
+          <p class="text-xs text-muted-foreground mt-1">{{ myChannel()?.isLive ? 'Streaming now' : 'Not broadcasting' }}</p>
         </div>
       </div>
 
@@ -84,7 +84,7 @@ import { VideoPlayerComponent } from '../../components/channel/video-player.comp
            <div class="bg-card border border-border rounded-lg p-4">
             <h3 class="font-semibold mb-4">Stream Preview</h3>
             <div class="aspect-video bg-black rounded-lg overflow-hidden">
-              @if (streamState()?.isLive && hlsUrl()) {
+              @if (myChannel()?.isLive && hlsUrl()) {
                 <app-video-player
                   [src]="hlsUrl()!"
                   [posterUrl]="myChannel()?.thumbnailUrl || ''"
@@ -96,7 +96,7 @@ import { VideoPlayerComponent } from '../../components/channel/video-player.comp
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-muted-foreground mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    @if (streamState()?.isLive) {
+                    @if (myChannel()?.isLive) {
                       <p class="text-red-500 font-medium">Stream starting...</p>
                     } @else {
                       <p class="text-muted-foreground text-sm">Start streaming to see preview</p>
@@ -159,13 +159,13 @@ import { VideoPlayerComponent } from '../../components/channel/video-player.comp
           <div class="bg-card border border-border rounded-lg p-4">
             <div class="text-center mb-4">
               <div class="inline-flex items-center gap-2 mb-2">
-                <span class="w-3 h-3 rounded-full" [class.bg-red-500]="streamState()?.isLive" [class.animate-pulse]="streamState()?.isLive" [class.bg-gray-400]="!streamState()?.isLive"></span>
-                <span class="text-sm font-medium" [class.text-red-500]="streamState()?.isLive" [class.text-muted-foreground]="!streamState()?.isLive">
-                  {{ streamState()?.isLive ? 'LIVE' : 'OFFLINE' }}
+                <span class="w-3 h-3 rounded-full" [class.bg-red-500]="myChannel()?.isLive" [class.animate-pulse]="myChannel()?.isLive" [class.bg-gray-400]="!myChannel()?.isLive"></span>
+                <span class="text-sm font-medium" [class.text-red-500]="myChannel()?.isLive" [class.text-muted-foreground]="!myChannel()?.isLive">
+                  {{ myChannel()?.isLive ? 'LIVE' : 'OFFLINE' }}
                 </span>
               </div>
-              @if (streamState()?.isLive) {
-                <p class="text-sm text-muted-foreground">{{ streamState()?.viewerCount }} watching</p>
+              @if (myChannel()?.isLive) {
+                <p class="text-sm text-muted-foreground">{{ myChannel()?.viewerCount }} watching</p>
               } @else {
                 <p class="text-sm text-muted-foreground">Start streaming to go live</p>
               }
@@ -224,7 +224,7 @@ import { VideoPlayerComponent } from '../../components/channel/video-player.comp
               </div>
               <div>
                 <p class="text-muted-foreground mb-1">HLS Playback</p>
-                <code class="block bg-secondary p-2 rounded text-xs break-all">http://localhost:8000/live/&#123;streamKey&#125;/stream.m3u8</code>
+                <code class="block bg-secondary p-2 rounded text-xs break-all">http://localhost:8000/live/&#123;streamKey&#125;/index.m3u8</code>
               </div>
             </div>
           </div>
@@ -241,7 +241,6 @@ import { VideoPlayerComponent } from '../../components/channel/video-player.comp
 export class DashboardComponent implements OnInit, OnDestroy {
   private channelService = inject(ChannelService);
   userService = inject(UserService);
-  private streamService = inject(StreamService);
 
   myChannel = signal<Channel | null>(null);
   loading = signal(true);
@@ -255,40 +254,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
   avatarUrl = '';
   bannerUrl = '';
 
-  streamState = computed(() => {
-    const channel = this.myChannel();
-    if (!channel?.streamKey) return null;
-
-    const state = this.streamService.getChannelState(channel.streamKey);
-    return {
-      ...channel,
-      isLive: state?.isLive ?? channel.isLive,
-      viewerCount: state?.viewerCount ?? channel.viewerCount ?? 0
-    };
-  });
-
   hlsUrl = computed(() => {
     const channel = this.myChannel();
-    if (channel?.streamKey) {
-      return `http://localhost:8000/live/${channel.streamKey}/stream.m3u8`;
+    if (channel?.hlsUrl) {
+      return channel.hlsUrl;
     }
     return null;
   });
 
   ngOnInit() {
     this.loadMyChannel();
-    this.streamService.connect();
   }
 
   ngOnDestroy() {
-    this.streamService.disconnect();
+    // cleanup
+  }
+
+  pollChannelStatus(){
+    return interval(5000).pipe(startWith(0),
+  switchMap(() => this.channelService.getMyChannel()));
   }
 
   loadMyChannel() {
     this.loading.set(true);
     this.error.set(null);
 
-    this.channelService.getMyChannel().subscribe({
+    this.pollChannelStatus().subscribe({
       next: (channel) => {
         this.myChannel.set(channel);
         this.bio = channel.bio || '';

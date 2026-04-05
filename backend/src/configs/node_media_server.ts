@@ -1,7 +1,11 @@
 import NodeMediaServer from 'node-media-server';
 import Channel from '../models/channel.model.js';
-import mongoose from 'mongoose';
-import { sseManager, StreamEvent } from '../services/sse-manager.js';
+import fs from 'fs';
+import path from 'path';
+
+// Fix for node-media-server bug
+// https://github.com/illuspas/Node-Media-Server/issues/450
+(global as any).version = 'ffmpeg unknown';
 
 const RTMP_PORT = parseInt(process.env.RTMP_PORT || '1935', 10);
 const HLS_PORT = parseInt(process.env.HLS_PORT || '8000', 10);
@@ -16,50 +20,17 @@ const config = {
   },
   http: {
     port: HLS_PORT,
-    mediaroot: './media',
+    mediaroot: path.resolve('./media'),
     allow_origin: '*'
   },
   trans: {
-    ffmpeg: '/usr/local/bin/ffmpeg',
+    ffmpeg: '/usr/bin/ffmpeg',
     tasks: [
       {
         app: 'live',
         hls: true,
         hlsFlags: '[hls_time=2:hls_list_size=10:hls_flags=delete_segments]',
-        tasks: [
-          {
-            mod: 'libx264',
-            name: '1080p',
-            videoBitrate: '2500k',
-            audioBitrate: '128k',
-            resolution: '1920x1080',
-            fps: 30
-          },
-          {
-            mod: 'libx264',
-            name: '720p',
-            videoBitrate: '1500k',
-            audioBitrate: '128k',
-            resolution: '1280x720',
-            fps: 30
-          },
-          {
-            mod: 'libx264',
-            name: '480p',
-            videoBitrate: '800k',
-            audioBitrate: '96k',
-            resolution: '854x480',
-            fps: 30
-          },
-          {
-            mod: 'libx264',
-            name: '360p',
-            videoBitrate: '400k',
-            audioBitrate: '96k',
-            resolution: '640x360',
-            fps: 30
-          }
-        ]
+        hlskeep: true
       }
     ]
   }
@@ -71,6 +42,12 @@ class StreamManager {
 
   start() {
     try {
+      const mediaPath = path.resolve(config.http.mediaroot);
+      if (!fs.existsSync(mediaPath)) {
+        fs.mkdirSync(mediaPath, { recursive: true });
+        console.log(`[StreamManager] Created media root directory at ${mediaPath}`);
+      }
+
       this.nms = new NodeMediaServer(config as any);
       this.nms.run();
       this.setupEventHandlers();
@@ -81,6 +58,14 @@ class StreamManager {
   }
 
   private setupEventHandlers() {
+
+
+    this.nms.on('ffmpegPublish', (stream: any) => {
+  console.log('[ffmpeg] process started for stream:', stream.streamPath);
+  stream.ffmpegProcess?.stderr?.on('data', (data: any) => {
+    console.log('[ffmpeg stderr]', data.toString());
+  });
+});
 
     this.nms.on('prePublish', async (session: any, streamPath: string, args: any) => {
       console.log('[NodeEvent prePublish]', `id=${session.id} streamPath=${streamPath}`);
@@ -110,6 +95,9 @@ class StreamManager {
 
         await Channel.findByIdAndUpdate(channel._id, { isLive: true, viewerCount: 0 });
 
+        const verify = await Channel.findById(channel._id);
+console.log('[StreamManager] DB verify after prePublish:', verify?.isLive);
+
         this.activeStreams.set(streamKey, {
           startTime: new Date(),
           viewerCount: 0
@@ -118,15 +106,6 @@ class StreamManager {
         const ownerName = (channel.owner as any)?.username || 'Unknown';
         console.log(`[StreamManager] Stream started: ${ownerName} (${streamKey})`);
 
-        const event: StreamEvent = {
-          type: 'stream_started',
-          streamKey,
-          channelId: channel._id.toString(),
-          username: ownerName,
-          viewerCount: 0,
-          timestamp: new Date().toISOString()
-        };
-        sseManager.broadcast(event);
       } catch (err) {
         console.error('[StreamManager] Error in prePublish:', err);
 
@@ -148,15 +127,7 @@ class StreamManager {
           await Channel.findByIdAndUpdate(channel._id, { isLive: false, viewerCount: 0 });
           const ownerName = (channel.owner as any)?.username || 'Unknown';
           console.log(`[StreamManager] Stream ended: ${ownerName}`);
-
-          const event: StreamEvent = {
-            type: 'stream_ended',
-            streamKey,
-            channelId: channel._id.toString(),
-            username: ownerName,
-            timestamp: new Date().toISOString()
-          };
-          sseManager.broadcast(event);
+          console.log('[StreamManager] DB verify after donePublish:', (await Channel.findById(channel._id))?.isLive);
         }
 
         this.activeStreams.delete(streamKey);
@@ -214,7 +185,7 @@ class StreamManager {
 
     const timer = setTimeout(async () => {
       this.viewerCountUpdateTimers.delete(streamKey);
-      
+
       try {
         const currentStream = this.activeStreams.get(streamKey);
         if (!currentStream) return;
@@ -222,20 +193,11 @@ class StreamManager {
         const channel = await Channel.findOne({ streamKey });
         if (channel) {
           const newCount = Math.max(0, currentStream.viewerCount);
-          
+
           if (newCount !== this.lastViewerCounts.get(streamKey)) {
             this.lastViewerCounts.set(streamKey, newCount);
-            
-            await Channel.findByIdAndUpdate(channel._id, { viewerCount: newCount });
 
-            const event: StreamEvent = {
-              type: 'viewer_count_updated',
-              streamKey,
-              channelId: channel._id.toString(),
-              viewerCount: newCount,
-              timestamp: new Date().toISOString()
-            };
-            sseManager.broadcast(event);
+            await Channel.findByIdAndUpdate(channel._id, { viewerCount: newCount });
           }
         }
       } catch (err) {
