@@ -187,7 +187,7 @@ import { ChannelService, Channel } from '../../services/channel.service';
         </div>
 
         <aside class="w-full lg:w-80 xl:w-96 flex flex-col h-[500px] lg:h-auto border-t lg:border-t-0 lg:border-l border-border">
-          <app-chat />
+          <app-chat [channelId]="channel()!.id" [channelUsername]="channel()!.username" />
         </aside>
       </main>
     }

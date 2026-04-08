@@ -1,5 +1,6 @@
 import express from "express";
 import type { Request, Response } from "express";
+import { createServer } from "http";
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -8,7 +9,9 @@ import cookieParser from 'cookie-parser';
 import channelRouter from './routes/channel.router.js';
 import followRouter from './routes/follow.router.js';
 import authRouter from './routes/auth.router.js';
+import streamRouter from './routes/stream.router.js';
 import { streamManager } from './configs/node_media_server.js';
+import { socketService } from './services/socket.service.js';
 
 dotenv.config()
 
@@ -26,6 +29,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRouter);
 app.use('/api/channels', channelRouter);
 app.use('/api/follows', followRouter);
+app.use('/api/streams', streamRouter);
 
 
 app.get("/api/health", (req: Request, res: Response) => {
@@ -56,9 +60,14 @@ const connectDB = async () => {
     }
 };
 
-app.listen(PORT, () => {
+const httpServer = createServer(app);
+
+socketService.initialize(httpServer);
+
+httpServer.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
     console.log(`RTMP Server: rtmp://localhost:1935`);
     console.log(`HLS Server: http://localhost:8000`);
+    console.log(`Socket.io: ws://localhost:${PORT}/socket.io`);
     connectDB();
 });
