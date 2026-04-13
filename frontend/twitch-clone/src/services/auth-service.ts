@@ -62,4 +62,8 @@ export class AuthService {
       return this.httpClient.get<IResisLoggedIn>(`${this.baseUrl}/auth/is-logged-in`);
     }
 
+    logout() {
+        return this.httpClient.post(`${this.baseUrl}/auth/logout`, {});
+    }
+
 }

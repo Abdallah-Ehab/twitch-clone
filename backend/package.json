@@ -16,6 +16,8 @@
   "dependencies": {
     "@types/mongoose": "^5.11.96",
     "@types/node-media-server": "^2.3.7",
+    "@types/socket.io": "^3.0.1",
+    "@types/socket.io-client": "^1.4.36",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",

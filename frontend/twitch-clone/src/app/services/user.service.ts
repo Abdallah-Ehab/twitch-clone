@@ -7,6 +7,7 @@ export interface CurrentUser {
     id: string;
     username: string;
     email?: string;
+    avatarUrl?: string;
 }
 
 const USER_STORAGE_KEY = 'streamhub_current_user';

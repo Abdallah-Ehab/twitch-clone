@@ -109,7 +109,8 @@ export const meController = async (req: Request, res: Response) => {
         res.status(200).json({
             id: user._id.toString(),
             username: user.username,
-            email: user.email
+            email: user.email,
+            avatarUrl: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`
         });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
