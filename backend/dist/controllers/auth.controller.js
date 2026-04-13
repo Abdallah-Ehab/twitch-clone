@@ -94,7 +94,8 @@ export const meController = async (req, res) => {
         res.status(200).json({
             id: user._id.toString(),
             username: user.username,
-            email: user.email
+            email: user.email,
+            avatarUrl: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`
         });
     }
     catch (error) {

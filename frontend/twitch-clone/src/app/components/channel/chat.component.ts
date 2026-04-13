@@ -31,17 +31,34 @@ import { AuthService } from '../../../services/auth-service';
 
       <!-- Chat Messages -->
       <div class="flex-1 overflow-y-auto p-3 space-y-1" #chatContainer>
+        <!-- Stream Ended Banner -->
+        @if (chatService.streamEnded()) {
+          <div class="p-3 rounded-lg bg-muted border border-border mb-3">
+            <div class="flex items-center gap-2 text-sm text-muted-foreground">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Stream has ended</span>
+            </div>
+          </div>
+        }
+
         @if (chatService.isLoading()) {
           <div class="flex items-center justify-center h-full">
             <div class="animate-pulse text-muted-foreground text-sm">Loading chat...</div>
           </div>
         } @else if (!chatService.isConnected() && channelUsername) {
           <div class="flex flex-col items-center justify-center h-full text-center p-4">
+            @if (chatService.connectionError()) {
+              <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 mb-3 max-w-[200px]">
+                <p class="text-red-400 text-xs">{{ chatService.connectionError() }}</p>
+              </div>
+            }
             <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-muted-foreground mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
             <p class="text-muted-foreground text-sm">Connect to watch the chat</p>
-            <button 
+            <button
               (click)="connectToChat()"
               class="mt-3 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 transition-colors"
             >
@@ -52,8 +69,8 @@ import { AuthService } from '../../../services/auth-service';
           @for (msg of chatService.messages(); track msg.id) {
             <div class="group flex gap-2 p-1.5 rounded hover:bg-muted/50">
               <!-- Avatar -->
-              <img 
-                [src]="msg.avatarUrl" 
+              <img
+                [src]="msg.avatarUrl"
                 [alt]="msg.username"
                 class="w-8 h-8 rounded-full flex-shrink-0 object-cover bg-muted"
               />
@@ -102,21 +119,21 @@ import { AuthService } from '../../../services/auth-service';
       <!-- Chat Input -->
       <div class="p-3 border-t border-border bg-card">
         <div class="relative">
-          <input 
-            type="text" 
+          <input
+            type="text"
             [(ngModel)]="messageInput"
-            [disabled]="!chatService.isConnected()"
+            [disabled]="!chatService.isConnected() || chatService.streamEnded()"
             (keyup.enter)="sendMessage()"
-            placeholder="{{ chatService.isConnected() ? 'Send a message' : 'Join chat to send messages' }}"
+            placeholder="{{ getInputPlaceholder() }}"
             class="w-full h-9 bg-secondary border border-input rounded-md pl-4 pr-20 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <button class="p-1.5 rounded hover:bg-muted" [disabled]="!chatService.isConnected()">
+            <button class="p-1.5 rounded hover:bg-muted" [disabled]="!chatService.isConnected() || chatService.streamEnded()">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
-            <button class="p-1.5 rounded hover:bg-muted" [disabled]="!chatService.isConnected()">
+            <button class="p-1.5 rounded hover:bg-muted" [disabled]="!chatService.isConnected() || chatService.streamEnded()">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
@@ -124,7 +141,7 @@ import { AuthService } from '../../../services/auth-service';
           </div>
         </div>
         <div class="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-          <span>Press Enter to send</span>
+          <span>{{ chatService.streamEnded() ? 'Chat is closed' : 'Press Enter to send' }}</span>
           <span>{{ messageInput.length }}/500</span>
         </div>
       </div>
@@ -165,17 +182,27 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.chatService.disconnect();
   }
 
-  connectToChat() {
-    if (this.channelId && this.authService.getAccessToken()) {
-      this.chatService.connect(this.channelId);
+   connectToChat() {
+        if (this.channelId && this.authService.getAccessToken()) {
+            this.chatService.connect(this.channelId);
+        }
     }
-  }
 
   sendMessage() {
     if (!this.messageInput.trim()) return;
-    
+
     this.chatService.sendMessage(this.messageInput);
     this.messageInput = '';
+  }
+
+  getInputPlaceholder(): string {
+    if (this.chatService.streamEnded()) {
+      return 'Chat is closed';
+    }
+    if (this.chatService.isConnected()) {
+      return 'Send a message';
+    }
+    return 'Join chat to send messages';
   }
 
   private scrollToBottom() {

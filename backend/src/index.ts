@@ -1,7 +1,9 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from "express";
 import type { Request, Response } from "express";
 import { createServer } from "http";
-import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -12,8 +14,6 @@ import authRouter from './routes/auth.router.js';
 import streamRouter from './routes/stream.router.js';
 import { streamManager } from './configs/node_media_server.js';
 import { socketService } from './services/socket.service.js';
-
-dotenv.config()
 
 const app = express();
 const PORT = process.env.PORT || 3000;

@@ -4,8 +4,15 @@ import Stream from '../models/stream.model.js';
 import Channel from '../models/channel.model.js';
 import userModel from '../models/user.model.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const MAX_MESSAGES = 100;
+
+const getJwtSecret = () => {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error('JWT_SECRET environment variable is not set');
+    }
+    return secret;
+};
 
 interface AuthenticatedSocket extends Socket {
     userId?: string;
@@ -43,12 +50,17 @@ class SocketService {
             try {
                 const token = socket.handshake.auth.token || socket.handshake.query.token;
                 
+                console.log('Socket auth - token received:', token?.substring(0, 50) + '...');
+                console.log('Socket auth - JWT_SECRET:', process.env.JWT_SECRET);
+                
                 if (!token) {
                     return next(new Error('Authentication required'));
                 }
 
-                const decoded = jwt.verify(token as string, JWT_SECRET) as any;
-                const user = await userModel.findById(decoded.userId).select('-password');
+                const decoded = jwt.verify(token as string, getJwtSecret()) as any;
+                console.log('Socket auth - decoded token:', decoded);
+                
+                const user = await userModel.findById(decoded.id).select('-password');
                 
                 if (!user) {
                     return next(new Error('User not found'));
@@ -59,9 +71,14 @@ class SocketService {
                 socket.displayName = user.username;
                 socket.avatarUrl = user.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${user.username}`;
                 
+                console.log('Socket auth - success for user:', user.username);
                 next();
-            } catch (error) {
-                next(new Error('Invalid token'));
+            } catch (error: any) {
+                console.error('Socket auth error:', error);
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                next(new Error('Invalid token: ' + error.message));
             }
         });
 
