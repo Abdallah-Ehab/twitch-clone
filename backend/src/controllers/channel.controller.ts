@@ -1,14 +1,26 @@
 import { Request, Response } from 'express';
-import { getAll, getByUsername, getById, getByUserId, update } from '../services/channel.service.js';
+import { getAll, getByUsername, getById, getByUserId, update, getCategories } from '../services/channel.service.js';
 
 export const getChannels = async (req: Request, res: Response) => {
     try {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 12;
         const liveOnly = req.query.liveOnly !== 'false';
+        const search = req.query.search as string | undefined;
+        const category = req.query.category as string | undefined;
+        const sortBy = req.query.sortBy as 'viewers' | 'recent' | 'alphabetical' | undefined;
 
-        const result = await getAll({ page, limit, liveOnly });
+        const result = await getAll({ page, limit, liveOnly, search, category, sortBy });
         res.status(200).json(result);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const getAllCategories = async (_req: Request, res: Response) => {
+    try {
+        const categories = await getCategories();
+        res.status(200).json(categories);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }

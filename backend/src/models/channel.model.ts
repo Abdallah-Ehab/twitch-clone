@@ -8,6 +8,7 @@ export interface IChannel extends Document {
   isLive: boolean;
   viewerCount: number;
   streamKey: string;
+  category: string;
 }
 
 const channelSchema = new Schema<IChannel>({
@@ -17,8 +18,13 @@ const channelSchema = new Schema<IChannel>({
   bannerUrl: { type: String, default: '' },
   isLive: { type: Boolean, default: false },
   viewerCount: { type: Number, default: 0 },
-  streamKey: { type: String, required: true, unique: true }
+  streamKey: { type: String, required: true, unique: true },
+  category: { type: String, default: 'Variety' }
 }, { timestamps: true });
+
+channelSchema.index({ bio: 'text' });
+channelSchema.index({ category: 1 });
+channelSchema.index({ isLive: 1, viewerCount: -1 });
 
 const Channel = model<IChannel>('Channel', channelSchema);
 
