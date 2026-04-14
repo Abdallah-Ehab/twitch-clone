@@ -240,11 +240,11 @@ export class ChannelComponent implements OnInit {
   }
 
   loadRecommendedChannels() {
-    this.channelService.getChannels().subscribe({
-      next: (channels) => {
+    this.channelService.getAllChannels().subscribe({
+      next: (result) => {
         const currentUsername = this.channel()?.username;
         this.recommendedChannels.set(
-          channels.filter(c => c.username !== currentUsername).slice(0, 6)
+          result.channels.filter(c => c.username !== currentUsername).slice(0, 6)
         );
       },
       error: () => {

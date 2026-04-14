@@ -19,6 +19,14 @@ export interface Channel {
     tags?: string[];
 }
 
+export interface PaginatedChannels {
+    channels: Channel[];
+    total: number;
+    page: number;
+    totalPages: number;
+    limit: number;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -26,8 +34,12 @@ export class ChannelService {
     private http = inject(HttpClient);
     private baseUrl = environment.apiUrl;
 
-    getChannels(): Observable<Channel[]> {
-        return this.http.get<Channel[]>(`${this.baseUrl}/channels`);
+    getChannels(page: number = 1, limit: number = 12): Observable<PaginatedChannels> {
+        return this.http.get<PaginatedChannels>(`${this.baseUrl}/channels?page=${page}&limit=${limit}`);
+    }
+
+    getAllChannels(): Observable<PaginatedChannels> {
+        return this.http.get<PaginatedChannels>(`${this.baseUrl}/channels?page=1&limit=100`);
     }
 
     getChannelByUsername(username: string): Observable<Channel> {

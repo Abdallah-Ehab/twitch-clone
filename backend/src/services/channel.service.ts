@@ -18,25 +18,51 @@ export interface ChannelResponse {
     qualities: string[];
 }
 
-export const getAll = async (): Promise<ChannelResponse[]> => {
-    const channels = await Channel.find({ isLive: true })
-        .populate<{ owner: IUser }>('owner', 'username avatarUrl')
-        .sort({ viewerCount: -1 })
-        .exec();
+export interface PaginatedChannels {
+    channels: ChannelResponse[];
+    total: number;
+    page: number;
+    totalPages: number;
+    limit: number;
+}
 
-    return channels.map(channel => ({
-        id: channel._id.toString(),
-        username: channel.owner.username,
-        avatarUrl: channel.owner.avatarUrl || '',
-        thumbnailUrl: channel.bannerUrl || '',
-        bannerUrl: channel.bannerUrl || '',
-        bio: channel.bio || '',
-        isLive: channel.isLive,
-        viewerCount: channel.viewerCount,
-        streamUrl: `${RTMP_URL}/live/${channel.streamKey}`,
-        hlsUrl: `${HLS_URL}/live/${channel.streamKey}/index.m3u8`,
-        qualities: ['auto', '1080p', '720p', '480p', '360p']
-    }));
+export const getAll = async (options: { page?: number; limit?: number; liveOnly?: boolean } = {}): Promise<PaginatedChannels> => {
+    const page = Math.max(1, options.page || 1);
+    const limit = Math.min(50, Math.max(1, options.limit || 12));
+    const skip = (page - 1) * limit;
+    const liveOnly = options.liveOnly !== false;
+
+    const query = liveOnly ? { isLive: true } : {};
+
+    const [channels, total] = await Promise.all([
+        Channel.find(query)
+            .populate<{ owner: IUser }>('owner', 'username avatarUrl')
+            .sort({ isLive: -1, viewerCount: -1 })
+            .skip(skip)
+            .limit(limit)
+            .exec(),
+        Channel.countDocuments(query)
+    ]);
+
+    return {
+        channels: channels.map(channel => ({
+            id: channel._id.toString(),
+            username: channel.owner.username,
+            avatarUrl: channel.owner.avatarUrl || '',
+            thumbnailUrl: channel.bannerUrl || '',
+            bannerUrl: channel.bannerUrl || '',
+            bio: channel.bio || '',
+            isLive: channel.isLive,
+            viewerCount: channel.viewerCount,
+            streamUrl: `${RTMP_URL}/live/${channel.streamKey}`,
+            hlsUrl: `${HLS_URL}/live/${channel.streamKey}/index.m3u8`,
+            qualities: ['auto', '1080p', '720p', '480p', '360p']
+        })),
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+        limit
+    };
 };
 
 export const getAllWithUserInfo = async (): Promise<ChannelResponse[]> => {
