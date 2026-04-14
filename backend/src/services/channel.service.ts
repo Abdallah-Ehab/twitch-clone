@@ -16,6 +16,7 @@ export interface ChannelResponse {
     streamUrl: string;
     hlsUrl: string;
     qualities: string[];
+    category: string;
 }
 
 export interface PaginatedChannels {
@@ -26,26 +27,81 @@ export interface PaginatedChannels {
     limit: number;
 }
 
-export const getAll = async (options: { page?: number; limit?: number; liveOnly?: boolean } = {}): Promise<PaginatedChannels> => {
+export interface ChannelFilters {
+    page?: number;
+    limit?: number;
+    liveOnly?: boolean;
+    search?: string;
+    category?: string;
+    sortBy?: 'viewers' | 'recent' | 'alphabetical';
+}
+
+export const getAll = async (options: ChannelFilters = {}): Promise<PaginatedChannels> => {
     const page = Math.max(1, options.page || 1);
     const limit = Math.min(50, Math.max(1, options.limit || 12));
     const skip = (page - 1) * limit;
     const liveOnly = options.liveOnly !== false;
 
-    const query = liveOnly ? { isLive: true } : {};
+    let query: any = {};
+
+    if (liveOnly) {
+        query.isLive = true;
+    }
+
+    if (options.category) {
+        query.category = options.category;
+    }
+
+    if (options.search) {
+        const searchRegex = new RegExp(options.search, 'i');
+        const users = await User.find({
+            $or: [
+                { username: searchRegex },
+                { email: searchRegex }
+            ]
+        }).select('_id');
+
+        query.$or = [
+            { owner: { $in: users.map(u => u._id) } },
+            { bio: searchRegex }
+        ];
+    }
+
+    let sort: any = { isLive: -1 };
+    switch (options.sortBy) {
+        case 'viewers':
+            sort = { isLive: -1, viewerCount: -1 };
+            break;
+        case 'recent':
+            sort = { createdAt: -1 };
+            if (liveOnly) sort.isLive = -1;
+            break;
+        case 'alphabetical':
+            sort = { isLive: -1 };
+            break;
+        default:
+            sort = { isLive: -1, viewerCount: -1 };
+    }
 
     const [channels, total] = await Promise.all([
         Channel.find(query)
             .populate<{ owner: IUser }>('owner', 'username avatarUrl')
-            .sort({ isLive: -1, viewerCount: -1 })
+            .sort(sort)
             .skip(skip)
             .limit(limit)
             .exec(),
         Channel.countDocuments(query)
     ]);
 
+    let sortedChannels = channels;
+    if (options.sortBy === 'alphabetical') {
+        sortedChannels = [...channels].sort((a, b) =>
+            a.owner.username.localeCompare(b.owner.username)
+        );
+    }
+
     return {
-        channels: channels.map(channel => ({
+        channels: sortedChannels.map(channel => ({
             id: channel._id.toString(),
             username: channel.owner.username,
             avatarUrl: channel.owner.avatarUrl || '',
@@ -56,13 +112,19 @@ export const getAll = async (options: { page?: number; limit?: number; liveOnly?
             viewerCount: channel.viewerCount,
             streamUrl: `${RTMP_URL}/live/${channel.streamKey}`,
             hlsUrl: `${HLS_URL}/live/${channel.streamKey}/index.m3u8`,
-            qualities: ['auto', '1080p', '720p', '480p', '360p']
+            qualities: ['auto', '1080p', '720p', '480p', '360p'],
+            category: channel.category || 'Variety'
         })),
         total,
         page,
         totalPages: Math.ceil(total / limit),
         limit
     };
+};
+
+export const getCategories = async (): Promise<string[]> => {
+    const categories = await Channel.distinct('category');
+    return categories.sort();
 };
 
 export const getAllWithUserInfo = async (): Promise<ChannelResponse[]> => {

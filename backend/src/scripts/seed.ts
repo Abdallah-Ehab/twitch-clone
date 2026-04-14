@@ -18,6 +18,7 @@ const streamers = [
         viewerCount: 45200,
         avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=128&h=128&fit=crop',
         bio: 'Professional gamer and content creator. FPS specialist.',
+        category: 'Fortnite',
         tags: ['Fortnite', 'FPS', 'Competitive']
     },
     {
@@ -28,6 +29,7 @@ const streamers = [
         viewerCount: 28500,
         avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop',
         bio: 'Variety streamer, anime enthusiast, and gaming community builder.',
+        category: 'Just Chatting',
         tags: ['Just Chatting', 'Variety', 'Gaming']
     },
     {
@@ -38,6 +40,7 @@ const streamers = [
         viewerCount: 32100,
         avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=128&h=128&fit=crop',
         bio: 'Former pro player, now streaming FPS games daily.',
+        category: 'Valorant',
         tags: ['Valorant', 'FPS', 'Competitive']
     },
     {
@@ -48,6 +51,7 @@ const streamers = [
         viewerCount: 18900,
         avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=128&h=128&fit=crop',
         bio: 'Chill vibes, variety content, and good times.',
+        category: 'GTA V',
         tags: ['GTA V', 'RP', 'Variety']
     },
     {
@@ -58,6 +62,7 @@ const streamers = [
         viewerCount: 22100,
         avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=128&h=128&fit=crop',
         bio: 'Variety streamer, mogul money, and creator economy enthusiast.',
+        category: 'Variety',
         tags: ['Variety', 'Content Creation', 'Events']
     },
     {
@@ -68,6 +73,7 @@ const streamers = [
         viewerCount: 67800,
         avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=128&h=128&fit=crop',
         bio: 'Reactions, variety, and chaotic energy.',
+        category: 'Just Chatting',
         tags: ['Just Chatting', 'Variety', 'Reactions']
     },
     {
@@ -78,6 +84,7 @@ const streamers = [
         viewerCount: 89400,
         avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=128&h=128&fit=crop',
         bio: 'CS2 professional player. The GOAT.',
+        category: 'CS2',
         tags: ['CS2', 'FPS', 'Competitive']
     },
     {
@@ -88,6 +95,7 @@ const streamers = [
         viewerCount: 15600,
         avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=128&h=128&fit=crop',
         bio: 'Variety streamer, musician, and overall amazing human.',
+        category: 'Variety',
         tags: ['Variety', 'Music', 'Chill']
     },
     {
@@ -98,6 +106,7 @@ const streamers = [
         viewerCount: 12300,
         avatarUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=128&h=128&fit=crop',
         bio: 'Wholesome variety streamer and community builder.',
+        category: 'Variety',
         tags: ['Variety', 'Community', 'Wholesome']
     },
     {
@@ -108,6 +117,7 @@ const streamers = [
         viewerCount: 19800,
         avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=128&h=128&fit=crop',
         bio: 'League of Legends and variety content.',
+        category: 'League of Legends',
         tags: ['League of Legends', 'Variety', 'Entertainment']
     },
     {
@@ -118,6 +128,7 @@ const streamers = [
         viewerCount: 16700,
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=128&h=128&fit=crop',
         bio: 'VTuber, singer, and positive vibes only.',
+        category: 'Variety',
         tags: ['VTuber', 'Singing', 'Variety']
     },
     {
@@ -128,6 +139,7 @@ const streamers = [
         viewerCount: 11200,
         avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=128&h=128&fit=crop',
         bio: 'FPS games, positivity, and good times.',
+        category: 'Valorant',
         tags: ['Valorant', 'FPS', 'Variety']
     },
     {
@@ -138,6 +150,7 @@ const streamers = [
         viewerCount: 45600,
         avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=128&h=128&fit=crop',
         bio: 'French CS2 legend and competitive gamer.',
+        category: 'CS2',
         tags: ['CS2', 'FPS', 'Competitive']
     },
     {
@@ -148,6 +161,7 @@ const streamers = [
         viewerCount: 8900,
         avatarUrl: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=128&h=128&fit=crop',
         bio: 'Variety content, reactions, and anime lover.',
+        category: 'Just Chatting',
         tags: ['Just Chatting', 'Anime', 'Variety']
     },
     {
@@ -158,6 +172,7 @@ const streamers = [
         viewerCount: 13400,
         avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=128&h=128&fit=crop',
         bio: 'Variety gaming, reactions, and chill vibes.',
+        category: 'Variety',
         tags: ['Variety', 'Gaming', 'Reactions']
     },
     {
@@ -168,6 +183,7 @@ const streamers = [
         viewerCount: 34500,
         avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=128&h=128&fit=crop',
         bio: 'Political commentary and variety content.',
+        category: 'Just Chatting',
         tags: ['Just Chatting', 'Politics', 'Variety']
     },
     {
@@ -178,6 +194,7 @@ const streamers = [
         viewerCount: 24100,
         avatarUrl: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=128&h=128&fit=crop',
         bio: 'GTA RP, variety, and high-octane gaming.',
+        category: 'GTA V',
         tags: ['GTA V', 'RP', 'Variety']
     },
     {
@@ -188,6 +205,7 @@ const streamers = [
         viewerCount: 28900,
         avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop',
         bio: 'Gaming, variety, and wholesome content.',
+        category: 'Variety',
         tags: ['Variety', 'Gaming', 'Wholesome']
     },
     {
@@ -198,6 +216,7 @@ const streamers = [
         viewerCount: 15800,
         avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=128&h=128&fit=crop',
         bio: 'Hype streams, gaming, and community love.',
+        category: 'Fortnite',
         tags: ['FPS', 'Variety', 'Entertainment']
     },
     {
@@ -208,6 +227,7 @@ const streamers = [
         viewerCount: 31200,
         avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=128&h=128&fit=crop',
         bio: 'Apex Legends, Warzone, and competitive gaming.',
+        category: 'Apex Legends',
         tags: ['Apex Legends', 'FPS', 'Competitive']
     },
     {
@@ -218,6 +238,7 @@ const streamers = [
         viewerCount: 18200,
         avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=128&h=128&fit=crop',
         bio: 'Variety gaming, horror games, and reactions.',
+        category: 'Variety',
         tags: ['Variety', 'Horror', 'Gaming']
     },
     {
@@ -228,6 +249,7 @@ const streamers = [
         viewerCount: 22400,
         avatarUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=128&h=128&fit=crop',
         bio: 'Reactions, commentary, and variety content.',
+        category: 'Just Chatting',
         tags: ['Just Chatting', 'Reactions', 'Variety']
     },
     {
@@ -238,6 +260,7 @@ const streamers = [
         viewerCount: 19600,
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=128&h=128&fit=crop',
         bio: 'Just chatting and variety content.',
+        category: 'Just Chatting',
         tags: ['Just Chatting', 'Variety', 'ASMR']
     },
     {
@@ -248,6 +271,7 @@ const streamers = [
         viewerCount: 25800,
         avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=128&h=128&fit=crop',
         bio: 'Callouts, reactions, and high energy content.',
+        category: 'Just Chatting',
         tags: ['Just Chatting', 'Variety', 'Callouts']
     },
     {
@@ -258,6 +282,7 @@ const streamers = [
         viewerCount: 0,
         avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=128&h=128&fit=crop',
         bio: 'Variety streamer and community builder.',
+        category: 'Variety',
         tags: ['Variety', 'Community', 'Gaming']
     },
     {
@@ -268,6 +293,7 @@ const streamers = [
         viewerCount: 0,
         avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=128&h=128&fit=crop',
         bio: 'Board games, variety, and witty commentary.',
+        category: 'Variety',
         tags: ['Variety', 'Board Games', 'Commentary']
     },
     {
@@ -278,6 +304,7 @@ const streamers = [
         viewerCount: 0,
         avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=128&h=128&fit=crop',
         bio: 'MMOs, variety, and gaming veteran.',
+        category: 'Minecraft',
         tags: ['MMO', 'Variety', 'Gaming']
     },
     {
@@ -288,6 +315,7 @@ const streamers = [
         viewerCount: 0,
         avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=128&h=128&fit=crop',
         bio: 'Speedrunner and competitive gaming.',
+        category: 'Minecraft',
         tags: ['Speedrunning', 'Competitive', 'Gaming']
     },
     {
@@ -298,6 +326,7 @@ const streamers = [
         viewerCount: 0,
         avatarUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=128&h=128&fit=crop',
         bio: 'Mobile gaming and variety content.',
+        category: 'Valorant',
         tags: ['Mobile Gaming', 'Variety', 'Gaming']
     },
     {
@@ -308,6 +337,7 @@ const streamers = [
         viewerCount: 0,
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=128&h=128&fit=crop',
         bio: 'Chill vibes, gaming, and good community.',
+        category: 'Variety',
         tags: ['Variety', 'Chill', 'Gaming']
     },
     {
@@ -318,6 +348,7 @@ const streamers = [
         viewerCount: 0,
         avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=128&h=128&fit=crop',
         bio: 'Apex Legends pro player and streamer.',
+        category: 'Apex Legends',
         tags: ['Apex Legends', 'FPS', 'Pro Player']
     },
     {
@@ -328,6 +359,7 @@ const streamers = [
         viewerCount: 0,
         avatarUrl: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=128&h=128&fit=crop',
         bio: 'FPS games and competitive ranked.',
+        category: 'Valorant',
         tags: ['FPS', 'Competitive', 'Gaming']
     },
     {
@@ -338,6 +370,7 @@ const streamers = [
         viewerCount: 0,
         avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=128&h=128&fit=crop',
         bio: 'Retro games and nostalgia content.',
+        category: 'Minecraft',
         tags: ['Retro Gaming', 'Variety', 'Nostalgia']
     },
     {
@@ -348,6 +381,7 @@ const streamers = [
         viewerCount: 0,
         avatarUrl: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=128&h=128&fit=crop',
         bio: 'Battle royale games and variety.',
+        category: 'Fortnite',
         tags: ['Battle Royale', 'Variety', 'Gaming']
     }
 ];
@@ -402,7 +436,8 @@ async function seed() {
                 bannerUrl: bannerImages[i % bannerImages.length],
                 isLive: streamer.isLive,
                 viewerCount: streamer.viewerCount,
-                streamKey: user.streamkey
+                streamKey: user.streamkey,
+                category: streamer.category
             });
 
             console.log(`Created user: ${streamer.username}`);

@@ -1,14 +1,16 @@
 import { Component, inject, OnInit, signal, HostListener, ElementRef } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { BrnButton } from '@spartan-ng/brain/button';
 import { UserService } from '../../services/user.service';
+import { ChannelService, Channel } from '../../services/channel.service';
 import { AuthService } from '../../../services/auth-service';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subject, switchMap, debounceTime, distinctUntilChanged } from 'rxjs';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [BrnButton],
+  imports: [BrnButton, FormsModule],
   template: `
     <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div class="flex h-14 items-center px-4 gap-4">
@@ -27,19 +29,57 @@ import { firstValueFrom } from 'rxjs';
           </a>
         </div>
 
-        <div class="flex-1 max-w-xl hidden sm:block">
+        <div class="flex-1 max-w-xl hidden sm:block relative">
           <div class="relative">
             <input
               type="text"
+              [(ngModel)]="searchQuery"
+              (input)="onSearchInput()"
+              (keydown.enter)="performSearch()"
               placeholder="Search streams, channels, or games"
               class="w-full h-9 bg-secondary border border-input rounded-l-md pl-4 pr-12 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             />
-            <button class="absolute right-0 top-0 h-full px-3 bg-muted hover:bg-muted/80 border border-l-0 border-input rounded-r-md">
+            <button 
+              (click)="performSearch()"
+              class="absolute right-0 top-0 h-full px-3 bg-muted hover:bg-muted/80 border border-l-0 border-input rounded-r-md"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </button>
           </div>
+          
+          @if (searchResults().length > 0 && showDropdown()) {
+            <div class="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50">
+              @for (channel of searchResults(); track channel.id) {
+                <a 
+                  [href]="'/channel/' + channel.username"
+                  class="flex items-center gap-3 px-4 py-2 hover:bg-muted cursor-pointer"
+                  (click)="closeSearchDropdown()"
+                >
+                  <img 
+                    [src]="channel.avatarUrl || defaultAvatar" 
+                    [alt]="channel.username"
+                    class="w-8 h-8 rounded-full object-cover"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-foreground truncate">{{ channel.username }}</p>
+                    <p class="text-xs text-muted-foreground truncate">{{ channel.category || 'Variety' }}</p>
+                  </div>
+                  @if (channel.isLive) {
+                    <span class="px-2 py-0.5 text-xs font-medium bg-red-600 text-white rounded">LIVE</span>
+                  }
+                </a>
+              }
+              <a 
+                [href]="'/search?q=' + encodeURIComponent(searchQuery)"
+                class="block px-4 py-2 text-sm text-primary hover:bg-muted border-t border-border"
+                (click)="closeSearchDropdown()"
+              >
+                See all results for "{{ searchQuery }}"
+              </a>
+            </div>
+          }
         </div>
 
         <div class="flex items-center gap-2 ml-auto">
@@ -114,16 +154,60 @@ import { firstValueFrom } from 'rxjs';
 export class HeaderComponent implements OnInit {
   userService = inject(UserService);
   private authService = inject(AuthService);
+  private channelService = inject(ChannelService);
   private router = inject(Router);
   private elementRef = inject(ElementRef);
 
   isDropdownOpen = signal(false);
+  searchQuery = '';
+  searchResults = signal<Channel[]>([]);
+  showDropdown = signal(false);
   defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+
+  private searchSubject = new Subject<string>();
 
   ngOnInit() {
     if (this.userService.isLoggedIn() && !this.userService.currentUser()?.avatarUrl) {
       this.fetchUserProfile();
     }
+
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(query => {
+        if (query.length < 2) {
+          return [];
+        }
+        return this.channelService.searchChannels(query);
+      })
+    ).subscribe(results => {
+      this.searchResults.set(results);
+      this.showDropdown.set(true);
+    });
+  }
+
+  onSearchInput() {
+    if (this.searchQuery.length < 2) {
+      this.searchResults.set([]);
+      this.showDropdown.set(false);
+    } else {
+      this.searchSubject.next(this.searchQuery);
+    }
+  }
+
+  performSearch() {
+    if (this.searchQuery.trim()) {
+      this.closeSearchDropdown();
+      this.router.navigate(['/'], { queryParams: { search: this.searchQuery.trim() } });
+    }
+  }
+
+  closeSearchDropdown() {
+    this.showDropdown.set(false);
+  }
+
+  encodeURIComponent(str: string): string {
+    return encodeURIComponent(str);
   }
 
   private async fetchUserProfile() {
@@ -142,6 +226,7 @@ export class HeaderComponent implements OnInit {
   onDocumentClick(event: MouseEvent) {
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.closeDropdown();
+      this.closeSearchDropdown();
     }
   }
 
