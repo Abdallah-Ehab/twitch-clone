@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { ChannelCardComponent } from '../../components/shared/channel-card.component';
 import { ChannelService, Channel } from '../../services/channel.service';
 
@@ -37,14 +37,8 @@ import { ChannelService, Channel } from '../../services/channel.service';
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
             <h2 class="text-xl font-bold text-foreground">Live Channels</h2>
-            <span class="text-sm text-muted-foreground">({{ channels().length }})</span>
+            <span class="text-sm text-muted-foreground">({{ total() }})</span>
           </div>
-          <button class="text-sm text-primary hover:text-primary/80 font-medium">
-            Show More
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
         </div>
 
         @if (channels().length === 0) {
@@ -66,6 +60,47 @@ import { ChannelService, Channel } from '../../services/channel.service';
               />
             }
           </div>
+
+          @if (totalPages() > 1) {
+            <div class="flex items-center justify-center gap-2 mt-8">
+              <button 
+                (click)="goToPage(currentPage() - 1)"
+                [disabled]="currentPage() === 1 || isLoadingPage()"
+                class="px-3 py-2 rounded-md text-sm font-medium border border-input bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              @for (page of visiblePages(); track page) {
+                @if (page === '...') {
+                  <span class="px-3 py-2 text-sm text-muted-foreground">...</span>
+                } @else {
+                  <button 
+                    (click)="goToPage(+page)"
+                    [disabled]="isLoadingPage()"
+                    [class.bg-primary]="currentPage() === +page"
+                    [class.text-primary-foreground]="currentPage() === +page"
+                    [class.bg-muted]="currentPage() !== +page"
+                    class="px-3 py-2 rounded-md text-sm font-medium border border-input hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {{ page }}
+                  </button>
+                }
+              }
+
+              <button 
+                (click)="goToPage(currentPage() + 1)"
+                [disabled]="currentPage() === totalPages() || isLoadingPage()"
+                class="px-3 py-2 rounded-md text-sm font-medium border border-input bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          }
         }
       </section>
     }
@@ -127,7 +162,31 @@ import { ChannelService, Channel } from '../../services/channel.service';
 export class HomeComponent implements OnInit {
   channels = signal<Channel[]>([]);
   loading = signal(true);
+  isLoadingPage = signal(false);
   error = signal<string | null>(null);
+  currentPage = signal(1);
+  totalPages = signal(1);
+  total = signal(0);
+
+  visiblePages = computed(() => {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const pages: (number | string)[] = [];
+
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (current > 3) pages.push('...');
+      for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+        pages.push(i);
+      }
+      if (current < total - 2) pages.push('...');
+      pages.push(total);
+    }
+
+    return pages;
+  });
 
   categories = [
     { name: 'Fortnite', thumbnailUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=320&h=180&fit=crop', iconUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=64&h=64&fit=crop', viewerCount: '125K', streams: 892 },
@@ -150,16 +209,30 @@ export class HomeComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.channelService.getChannels().subscribe({
-      next: (channels) => {
-        this.channels.set(channels);
+    this.channelService.getChannels(this.currentPage(), 12).subscribe({
+      next: (result) => {
+        this.channels.set(result.channels);
+        this.total.set(result.total);
+        this.totalPages.set(result.totalPages);
         this.loading.set(false);
+        this.isLoadingPage.set(false);
       },
       error: (err) => {
         console.error('Failed to load channels:', err);
         this.error.set('Failed to load channels. Please make sure the backend is running.');
         this.loading.set(false);
+        this.isLoadingPage.set(false);
       }
     });
+  }
+
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages() || page === this.currentPage() || this.isLoadingPage()) {
+      return;
+    }
+    this.currentPage.set(page);
+    this.isLoadingPage.set(true);
+    this.loadChannels();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }

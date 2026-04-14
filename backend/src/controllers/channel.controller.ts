@@ -3,8 +3,12 @@ import { getAll, getByUsername, getById, getByUserId, update } from '../services
 
 export const getChannels = async (req: Request, res: Response) => {
     try {
-        const channels = await getAll();
-        res.status(200).json(channels);
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 12;
+        const liveOnly = req.query.liveOnly !== 'false';
+
+        const result = await getAll({ page, limit, liveOnly });
+        res.status(200).json(result);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }

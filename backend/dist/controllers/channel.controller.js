@@ -1,8 +1,11 @@
 import { getAll, getByUsername, getById, getByUserId, update } from '../services/channel.service.js';
 export const getChannels = async (req, res) => {
     try {
-        const channels = await getAll();
-        res.status(200).json(channels);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const liveOnly = req.query.liveOnly !== 'false';
+        const result = await getAll({ page, limit, liveOnly });
+        res.status(200).json(result);
     }
     catch (error) {
         res.status(500).json({ error: error.message });
